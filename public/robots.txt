@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /login
+Disallow: /gallery
+Disallow: /pimpinan
+Disallow: /sponsor
+Disallow: /manage/
+Disallow: /galeri-kelola
+
+Sitemap: https://mkkssmkkabbekasi.or.id/sitemap.xml

@@ -1,0 +1,57 @@
+/* Ensure full height for the body and container to make footer stick */
+html, body {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+/* Full height for the main container to push the footer to the bottom */
+.container {
+    flex: 1;
+}
+
+/* .site-subtitle {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.site-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+} */
+
+.divisi-section {
+    padding-bottom: 3rem;
+}
+
+.card {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.card-img-top {
+    object-fit: cover;
+    height: 200px;
+}
+
+.btn-selengkapnya {
+    border: 1px solid #000;
+    border-radius: 20px;
+    padding: 0.5rem 1.5rem;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+}
+
+/* Sticky footer */
+/* footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    text-align: center;
+} */

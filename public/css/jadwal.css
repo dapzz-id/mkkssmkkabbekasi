@@ -1,0 +1,290 @@
+/* Main Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+}
+/*
+.header {
+    background-color: #5B5E61;
+    color: #ffffff;
+    padding: 1rem 2rem;
+} */
+
+/* .site-title {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.site-subtitle {
+    margin: 0;
+    font-size: 1.5rem;
+    font-family: "Poppins", sans-serif;
+    font-weight: 700;
+    font-style: normal;
+} */
+
+/* .site-subtitle {
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.site-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+} */
+
+.main-nav {
+    background: #ffffff;
+    padding: 1rem 2rem;
+}
+
+.nav-container {
+    background: #5B5E61;
+    border-radius: 25px;
+    padding: 0.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.nav-container .nav-link {
+    color: #ffffff;
+    padding: 0.5rem 2rem;
+    text-transform: uppercase;
+    font-weight: 500;
+}
+
+.nav-container .nav-link.active {
+    background: #ffffff;
+    color: #000;
+    border-radius: 20px;
+}
+
+.profile-section {
+    padding: 3rem 2rem;
+}
+
+.profile-image {
+    width: 200px;
+    height: 250px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-right: 1rem;
+}
+
+.btn-selengkapnya {
+    border: 2px solid #000;
+    border-radius: 20px;
+    padding: 0.5rem 2rem;
+    text-transform: uppercase;
+}
+
+.vision-mission {
+    text-align: center;
+    padding: 3rem 2rem;
+}
+
+.vision-mission h2 {
+    font-weight: bold;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+}
+
+.vision-text {
+    max-width: 600px;
+    margin: 0 auto 4rem;
+    line-height: 1.8;
+}
+
+/* .footer {
+    background-color: #5B5E61;
+    color: #ffffff;
+    padding: 2rem 0;
+    text-align: center;
+} */
+
+.running-text {
+    background-color: #5B5E61;
+    color: #ffffff;
+    padding: 0.5rem 0;
+    text-align: center;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+/* Calendar Styles */
+.calendar-container {
+    width: 35%;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    padding-bottom: 60px;
+}
+
+.calendar-day-header, .calendar-date {
+    text-align: center;
+    padding: 10px;
+}
+
+.calendar-day-header {
+    font-weight: bold;
+}
+
+.calendar-date {
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+}
+
+.calendar-date:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.calendar-date.today {
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px solid white;
+}
+
+.calendar-date.weekend {
+    color: #ff4444;
+}
+
+.calendar-date.has-event {
+    border: 2px solid #4CAF50;
+}
+
+.delete-event {
+    color: #ff4444;
+    cursor: pointer;
+    float: right;
+    padding: 5px;
+}
+
+.calendar-nav button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0 10px;
+}
+
+.calendar-nav button:hover {
+    color: #4CAF50;
+}
+
+.col.border.p-2 {
+    min-height: 40px;
+    transition: background-color 0.3s ease;
+}
+
+.col.border.p-2:hover {
+    background-color: #f8f9fa;
+}
+
+.has-event {
+    position: relative;
+}
+
+.has-event:hover {
+    background-color: #b8daff !important;
+}
+
+.today {
+    font-weight: bold;
+}
+
+.event-form {
+    display: none;
+}
+
+/* News Styles */
+.main-news {
+    border: none;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.main-news:hover {
+    transform: translateY(-5px);
+}
+
+.main-news-img {
+    height: 400px;
+    object-fit: cover;
+}
+
+.news-img {
+    height: 200px;
+    object-fit: cover;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-title {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.5em 1em;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .main-news-img {
+        height: 250px;
+    }
+
+    .news-img {
+        height: 180px;
+    }
+}
+
+.events-container {
+    width: 62%;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.calendar {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+}
+
+.calendar th, .calendar td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+.calendar-header button {
+    padding: 5px 10px;
+    font-size: 0.9em;
+}
