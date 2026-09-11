@@ -39,14 +39,14 @@
     {
         "@context": "https://schema.org",
         "@type": "NewsArticle",
-        "headline": {{ json_encode($seoTitle) }},
-        "description": {{ json_encode($seoDescription) }},
-        "image": [{{ json_encode($ogImage) }}],
-        "datePublished": {{ json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) }},
-        "dateModified": {{ json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) }},
+        "headline": {!! json_encode($seoTitle, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!},
+        "description": {!! json_encode($seoDescription, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!},
+        "image": [{!! json_encode($ogImage, JSON_UNESCAPED_SLASHES) !!}],
+        "datePublished": {!! json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) !!},
+        "dateModified": {!! json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) !!},
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": {{ json_encode($canonicalUrl) }}
+            "@id": {!! json_encode($canonicalUrl, JSON_UNESCAPED_SLASHES) !!}
         },
         "author": {
             "@type": "Organization",
