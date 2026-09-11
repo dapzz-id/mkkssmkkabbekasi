@@ -39,14 +39,14 @@
     {
         "@context": "https://schema.org",
         "@type": "NewsArticle",
-        "headline": {{ json_encode($seoTitle) }},
-        "description": {{ json_encode($seoDescription) }},
-        "image": [{{ json_encode($ogImage) }}],
-        "datePublished": {{ json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) }},
-        "dateModified": {{ json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) }},
+        "headline": {!! json_encode($seoTitle, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!},
+        "description": {!! json_encode($seoDescription, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!},
+        "image": [{!! json_encode($ogImage, JSON_UNESCAPED_SLASHES) !!}],
+        "datePublished": {!! json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) !!},
+        "dateModified": {!! json_encode(\Carbon\Carbon::parse($konten->tanggal_upload)->toIso8601String()) !!},
         "mainEntityOfPage": {
             "@type": "WebPage",
-            "@id": {{ json_encode($canonicalUrl) }}
+            "@id": {!! json_encode($canonicalUrl, JSON_UNESCAPED_SLASHES) !!}
         },
         "author": {
             "@type": "Organization",
@@ -144,7 +144,7 @@
 
                 <!-- Deskripsi Section -->
                 <div class="pt-4 border-t border-slate-100">
-                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Deskripsi Kegiatan</h2>
+                    {{-- <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Deskripsi Kegiatan</h2> --}}
                     <div class="prose prose-slate max-w-none text-sm sm:text-base text-slate-700 leading-relaxed space-y-3">
                         {!! nl2br(e($konten->deskripsi)) !!}
                     </div>

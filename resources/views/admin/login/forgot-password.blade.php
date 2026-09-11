@@ -68,6 +68,24 @@
             to   { opacity: 1; transform: translateY(0); }
         }
         .alert-anim { animation: slideInDown 0.25s ease; }
+        /* Turnstile container */
+        .turnstile-wrap {
+            width: 100%;
+            min-height: 65px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+        }
+        @media (max-width: 380px) {
+            .turnstile-wrap {
+                transform: scale(0.88);
+                transform-origin: center center;
+            }
+        }
+        .turnstile-wrap > div {
+            width: 100%;
+        }
     </style>
 </head>
 <body class="auth-page">
@@ -165,10 +183,16 @@
                     </p>
                 </div>
 
+                {{-- Cloudflare Turnstile Verification --}}
+                <div class="turnstile-wrap my-1">
+                    <x-turnstile action="forgot_password" theme="light" size="flexible" />
+                </div>
+
                 <button
                     type="submit"
                     id="btnSubmit"
-                    class="btn-primary w-full h-[52px] rounded-xl text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    disabled
+                    class="btn-primary w-full h-[52px] rounded-xl text-white font-bold text-sm sm:text-base flex items-center justify-center gap-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     <span id="btnSubmitText">Kirim Tautan Reset</span>
                     <svg id="btnSubmitSpinner" class="w-5 h-5 animate-spin hidden" fill="none" viewBox="0 0 24 24">
@@ -200,8 +224,45 @@
             var btnText = document.getElementById('btnSubmitText');
             var spinner = document.getElementById('btnSubmitSpinner');
 
+            // Turnstile State Management
+            var originalOnTurnstileSuccess = window.onTurnstileSuccess;
+            var originalOnTurnstileExpired = window.onTurnstileExpired;
+            var originalOnTurnstileError = window.onTurnstileError;
+
+            window.onTurnstileSuccess = function(token) {
+                if (originalOnTurnstileSuccess) originalOnTurnstileSuccess(token);
+                if (btn) btn.disabled = false;
+            };
+
+            window.onTurnstileExpired = function() {
+                if (originalOnTurnstileExpired) originalOnTurnstileExpired();
+                if (btn) btn.disabled = true;
+            };
+
+            window.onTurnstileError = function() {
+                if (originalOnTurnstileError) originalOnTurnstileError();
+                if (btn) btn.disabled = true;
+            };
+
+            // Initial state check (e.g. if back-forward cache or turnstile not enabled)
+            setTimeout(function() {
+                var widget = form ? form.querySelector('#turnstile-widget') : null;
+                var initialToken = form ? form.querySelector('[name="cf-turnstile-response"]') : null;
+                if (!widget && btn) {
+                    btn.disabled = false;
+                } else if (initialToken && initialToken.value && btn) {
+                    btn.disabled = false;
+                }
+            }, 500);
+
             if (form && btn) {
-                form.addEventListener('submit', function () {
+                form.addEventListener('submit', function (e) {
+                    var widget = form.querySelector('#turnstile-widget');
+                    var currentToken = form.querySelector('[name="cf-turnstile-response"]');
+                    if (widget && (!currentToken || !currentToken.value)) {
+                        e.preventDefault();
+                        return;
+                    }
                     btn.disabled = true;
                     btnText.textContent = 'Mengirim...';
                     spinner.classList.remove('hidden');
