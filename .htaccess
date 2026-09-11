@@ -1,0 +1,53 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. CEGAH DIRECTORY BROWSING
+    <IfModule mod_negotiation.c>
+        Options -Indexes -MultiViews
+    </IfModule>
+
+    # 2. SOLUSI GAMBAR: Teruskan /storage/ langsung ke public/storage/ (Symlink)
+    RewriteRule ^storage/(.*)$ public/storage/$1 [L]
+
+    # 3. KEAMANAN: Blokir file tersembunyi (.env, .git, dll)
+    RewriteRule (^|/)\.(?!well-known) - [F,L]
+
+    # 4. KEAMANAN: Blokir folder internal sistem Laravel
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|tests|vendor)(/.*)?$ - [F,L]
+
+    # 5. KEAMANAN: Lindungi folder internal storage (logs, framework, app), tanpa mengganggu public media
+    RewriteRule ^storage/(app|framework|logs)(/.*)?$ - [F,L]
+
+    # 6. KEAMANAN: Blokir file konfigurasi sensitif di root
+    RewriteRule ^(composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|\.env.*|vite\.config\.js|postcss\.config\.js|tailwind\.config\.js)$ - [F,L]
+
+    # 7. ROUTING UTAMA: Lempar semua request web lainnya ke folder public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
+
+<Files 403.shtml>
+order allow,deny
+allow from all
+</Files>
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php8_module>
+   php_value error_log "/home/mkkssmkb/logs/php.error.log"
+   php_flag log_errors On
+</IfModule>
+<IfModule lsapi_module>
+   php_value error_log "/home/mkkssmkb/logs/php.error.log"
+   php_flag log_errors On
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php83” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php83 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
