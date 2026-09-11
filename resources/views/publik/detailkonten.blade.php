@@ -177,7 +177,8 @@
                             @if($isVideo)
                                 <video src="{{ $mUrl }}"
                                        controls
-                                       preload="metadata"
+                                       preload="none"
+                                       playsinline
                                        class="w-full h-full object-contain p-1 rounded-xl">
                                 </video>
                                 <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-xs font-bold text-white uppercase bg-indigo-600/90 pointer-events-none shadow-xs">
@@ -192,16 +193,24 @@
                                     </svg>
                                 </button>
                             @else
+                                <div class="media-skeleton absolute inset-0 bg-slate-200/60 animate-pulse flex items-center justify-center pointer-events-none transition-opacity duration-300">
+                                    <svg class="w-6 h-6 text-slate-400/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
                                 <img src="{{ $mUrl }}"
                                      alt="{{ $konten->judul }} - Foto {{ $index + 1 }}"
                                      loading="lazy"
-                                     class="w-full h-full object-contain p-1 cursor-pointer transition-transform duration-300 group-hover:scale-105 btn-open-lightbox"
-                                     data-index="{{ $index }}">
-                                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-xs font-bold text-white uppercase bg-slate-800/80 pointer-events-none shadow-xs">
+                                     decoding="async"
+                                     class="w-full h-full object-contain p-1 cursor-pointer transition-all duration-300 group-hover:scale-105 btn-open-lightbox relative z-10 opacity-0"
+                                     data-index="{{ $index }}"
+                                     onload="this.classList.remove('opacity-0'); this.previousElementSibling?.classList.add('opacity-0'); setTimeout(() => this.previousElementSibling?.remove(), 300);"
+                                     onerror="this.previousElementSibling?.remove(); this.classList.remove('opacity-0'); this.classList.add('grayscale', 'opacity-50');">
+                                <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md text-xs font-bold text-white uppercase bg-slate-800/80 pointer-events-none shadow-xs z-20">
                                     Foto
                                 </span>
                                 <button type="button"
-                                        class="btn-open-lightbox absolute top-2 right-2 w-8 h-8 rounded-xl bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer"
+                                        class="btn-open-lightbox absolute top-2 right-2 w-8 h-8 rounded-xl bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100 cursor-pointer z-20"
                                         data-index="{{ $index }}"
                                         title="Perbesar foto">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -210,7 +219,7 @@
                                 </button>
                             @endif
 
-                            <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-semibold text-slate-600 bg-white/90 shadow-2xs pointer-events-none">
+                            <span class="absolute bottom-2 right-2 px-2 py-0.5 rounded text-xs font-semibold text-slate-600 bg-white/90 shadow-2xs pointer-events-none z-20">
                                 #{{ $index + 1 }}
                             </span>
                         </div>
