@@ -144,7 +144,7 @@
 
                 <!-- Deskripsi Section -->
                 <div class="pt-4 border-t border-slate-100">
-                    <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Deskripsi Kegiatan</h2>
+                    {{-- <h2 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Deskripsi Kegiatan</h2> --}}
                     <div class="prose prose-slate max-w-none text-sm sm:text-base text-slate-700 leading-relaxed space-y-3">
                         {!! nl2br(e($konten->deskripsi)) !!}
                     </div>
