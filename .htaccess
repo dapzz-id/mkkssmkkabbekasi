@@ -1,0 +1,51 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1. CEGAH DIRECTORY LISTING (Browsing folder tanpa index)
+    <IfModule mod_negotiation.c>
+        Options -Indexes -MultiViews
+    </IfModule>
+
+    # 2. KEAMANAN: BLOKIR AKSES KE FILE DOT (.env, .git, .htaccess, dll)
+    RewriteRule (^|/)\.(?!well-known) - [F,L]
+
+    # 3. KEAMANAN: BLOKIR AKSES LANGSUNG KE FOLDER SYSTEM LARAVEL
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor)(/.*)?$ - [F,L]
+
+    # 4. KEAMANAN: BLOKIR FILE KONFIGURASI SENSITIF DI ROOT
+    RewriteRule ^(composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|\.env.*|vite\.config\.js|postcss\.config\.js|tailwind\.config\.js)$ - [F,L]
+
+    # 5. CANONICAL CLEAN URL: Hilangkan kata '/public/' jika diketik manual di browser
+    RewriteCond %{THE_REQUEST} /public/([^\s?]*) [NC]
+    RewriteRule ^ %1 [L,NE,R=301]
+
+    # 6. FORWARD UTAMA: Alihkan semua request publik ke folder public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L,QSA]
+</IfModule>
+
+<Files 403.shtml>
+order allow,deny
+allow from all
+</Files>
+
+# BEGIN cPanel-generated php ini directives, do not edit
+# Manual editing of this file may result in unexpected behavior.
+# To make changes to this file, use the cPanel MultiPHP INI Editor (Home >> Software >> MultiPHP INI Editor)
+# For more information, read our documentation (https://go.cpanel.net/EA4ModifyINI)
+<IfModule php8_module>
+   php_value error_log "/home/mkkssmkb/logs/php.error.log"
+   php_flag log_errors On
+</IfModule>
+<IfModule lsapi_module>
+   php_value error_log "/home/mkkssmkb/logs/php.error.log"
+   php_flag log_errors On
+</IfModule>
+# END cPanel-generated php ini directives, do not edit
+
+# php -- BEGIN cPanel-generated handler, do not edit
+# Set the “ea-php83” package as the default “PHP” programming language.
+<IfModule mime_module>
+  AddHandler application/x-httpd-ea-php83 .php .php8 .phtml
+</IfModule>
+# php -- END cPanel-generated handler, do not edit
