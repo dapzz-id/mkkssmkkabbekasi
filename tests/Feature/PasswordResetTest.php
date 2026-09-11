@@ -9,12 +9,14 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected string $verifyUrl = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
     protected User $testUser;
 
     protected function setUp(): void
@@ -71,14 +73,75 @@ class PasswordResetTest extends TestCase
         $response->assertSessionHasErrors(['email']);
     }
 
-    // ── 3. Forgot password — security: user enumeration prevention ──
+    // ── 3. Forgot password — Turnstile verification ────────────────
+
+    public function test_forgot_password_requires_turnstile_response(): void
+    {
+        $response = $this->post(route('password.email'), [
+            'email' => $this->testUser->email,
+            // cf-turnstile-response omitted
+        ]);
+
+        $response->assertSessionHasErrors(['cf-turnstile-response']);
+    }
+
+    public function test_forgot_password_fails_when_turnstile_is_invalid(): void
+    {
+        Http::fake([
+            $this->verifyUrl => Http::response([
+                'success' => false,
+                'error-codes' => ['invalid-input-response'],
+            ], 200),
+        ]);
+
+        $response = $this->post(route('password.email'), [
+            'email' => $this->testUser->email,
+            'cf-turnstile-response' => 'invalid-token',
+        ]);
+
+        $response->assertSessionHasErrors(['cf-turnstile-response']);
+    }
+
+    protected function fakeTurnstileSuccess(string $action = 'forgot_password'): void
+    {
+        Http::fake([
+            $this->verifyUrl => Http::response([
+                'success' => true,
+                'hostname' => 'mkkssmkbekasi.or.id',
+                'action' => $action,
+                'challenge_ts' => now()->toIso8601String(),
+            ], 200),
+        ]);
+    }
+
+    public function test_forgot_password_fails_when_turnstile_action_mismatches(): void
+    {
+        Http::fake([
+            $this->verifyUrl => Http::response([
+                'success' => true,
+                'hostname' => 'mkkssmkbekasi.or.id',
+                'action' => 'login', // mismatched action
+            ], 200),
+        ]);
+
+        $response = $this->post(route('password.email'), [
+            'email' => $this->testUser->email,
+            'cf-turnstile-response' => 'some-token',
+        ]);
+
+        $response->assertSessionHasErrors(['cf-turnstile-response']);
+    }
+
+    // ── 4. Forgot password — security: user enumeration prevention ──
 
     public function test_forgot_password_returns_generic_response_for_nonexistent_email(): void
     {
+        $this->fakeTurnstileSuccess();
         Notification::fake();
 
         $response = $this->post(route('password.email'), [
             'email' => 'nonexistent@example.com',
+            'cf-turnstile-response' => 'valid-turnstile-token',
         ]);
 
         // SECURITY: Must NOT redirect to error; always redirect with session 'status'
@@ -89,10 +152,12 @@ class PasswordResetTest extends TestCase
 
     public function test_forgot_password_sends_notification_for_existing_email(): void
     {
+        $this->fakeTurnstileSuccess();
         Notification::fake();
 
         $response = $this->post(route('password.email'), [
             'email' => $this->testUser->email,
+            'cf-turnstile-response' => 'valid-turnstile-token',
         ]);
 
         $response->assertSessionHas('status');
