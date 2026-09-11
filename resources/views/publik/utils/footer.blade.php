@@ -33,7 +33,7 @@
                 <div class="flex-wrap gap-4 mb-4 sponsor-wrapper d-flex justify-content-center align-items-center">
                     @foreach($sponsor as $item)
                         <div class="sponsor-item">
-                            <img data-src="{{ $item->url_image }}" height="60" title="{{$item->nama}}" alt="{{ $item->nama }}" class="lazyload sponsor-image">
+                            <img src="{{ $item->url_image }}" data-src="{{ $item->url_image }}" loading="lazy" decoding="async" height="60" title="{{$item->nama}}" alt="{{ $item->nama }}" class="lazyload sponsor-image">
                         </div>
                     @endforeach
                 </div>

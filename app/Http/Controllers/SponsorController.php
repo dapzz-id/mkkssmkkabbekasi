@@ -45,9 +45,8 @@ class SponsorController extends Controller
         $image = $request->file('url_image');
         $imageInfo = $this->uploadValidator->validateSponsorLogo($image);
 
-        // Build data URI using server-detected MIME, never trusting client MIME
-        $imageBase64 = base64_encode(file_get_contents($image->getRealPath()));
-        $dataUri = 'data:' . $imageInfo['mime'] . ';base64,' . $imageBase64;
+        // Build optimized data URI with auto-downscaling to prevent bloated HTML payload
+        $dataUri = $this->optimizeLogoToBase64($image, $imageInfo['mime']);
 
         DB::beginTransaction();
         try {
@@ -96,8 +95,7 @@ class SponsorController extends Controller
             $image = $request->file('url_image');
             $imageInfo = $this->uploadValidator->validateSponsorLogo($image);
 
-            $imageBase64 = base64_encode(file_get_contents($image->getRealPath()));
-            $newImageUri = 'data:' . $imageInfo['mime'] . ';base64,' . $imageBase64;
+            $newImageUri = $this->optimizeLogoToBase64($image, $imageInfo['mime']);
         }
 
         // Database ACID critical section
@@ -133,6 +131,7 @@ class SponsorController extends Controller
                 DB::commit();
                 return response()->json(['status' => 'success']);
             } else {
+                $sponsorNotFound = true;
                 DB::rollBack();
                 return response()->json(['status' => 'error', 'message' => 'Sponsor tidak ditemukan'], 404);
             }
@@ -141,5 +140,61 @@ class SponsorController extends Controller
             Log::error('Gagal menghapus sponsor: ' . $e->getMessage());
             return response()->json(['status' => 'error', 'message' => 'Gagal menghapus data sponsor'], 500);
         }
+    }
+
+    /**
+     * Downscale and optimize sponsor logo to max height 140px preserving transparency.
+     */
+    protected function optimizeLogoToBase64(\Illuminate\Http\UploadedFile $file, string $mime): string
+    {
+        $realPath = $file->getRealPath();
+
+        // If SVG, keep raw SVG as data URI (SVGs are vector and already small)
+        if (str_contains($mime, 'svg')) {
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($realPath));
+        }
+
+        $binary = file_get_contents($realPath);
+        $img = @imagecreatefromstring($binary);
+        if (!$img) {
+            return 'data:' . $mime . ';base64,' . base64_encode($binary);
+        }
+
+        $origW = imagesx($img);
+        $origH = imagesy($img);
+        $maxH = 140;
+
+        if ($origH > $maxH) {
+            $ratio = $maxH / $origH;
+            $newH = $maxH;
+            $newW = (int) round($origW * $ratio);
+
+            $resized = imagecreatetruecolor($newW, $newH);
+            imagealphablending($resized, false);
+            imagesavealpha($resized, true);
+            $transparent = imagecolorallocatealpha($resized, 255, 255, 255, 127);
+            imagefilledrectangle($resized, 0, 0, $newW, $newH, $transparent);
+
+            imagecopyresampled($resized, $img, 0, 0, 0, 0, $newW, $newH, $origW, $origH);
+
+            ob_start();
+            if (str_contains($mime, 'png')) {
+                imagepng($resized, null, 8);
+            } elseif (str_contains($mime, 'jpeg') || str_contains($mime, 'jpg')) {
+                imagejpeg($resized, null, 85);
+            } elseif (str_contains($mime, 'webp')) {
+                imagewebp($resized, null, 85);
+            } else {
+                imagepng($resized);
+            }
+            $optimizedBinary = ob_get_clean();
+            imagedestroy($resized);
+            imagedestroy($img);
+
+            return 'data:' . $mime . ';base64,' . base64_encode($optimizedBinary);
+        }
+
+        imagedestroy($img);
+        return 'data:' . $mime . ';base64,' . base64_encode($binary);
     }
 }
