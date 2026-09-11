@@ -1,25 +1,27 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # 1. CEGAH DIRECTORY LISTING (Browsing folder tanpa index)
+    # 1. CEGAH DIRECTORY BROWSING
     <IfModule mod_negotiation.c>
         Options -Indexes -MultiViews
     </IfModule>
 
-    # 2. KEAMANAN: BLOKIR AKSES KE FILE DOT (.env, .git, .htaccess, dll)
+    # 2. SOLUSI GAMBAR: Teruskan /storage/ langsung ke public/storage/ (Symlink)
+    RewriteRule ^storage/(.*)$ public/storage/$1 [L]
+
+    # 3. KEAMANAN: Blokir file tersembunyi (.env, .git, dll)
     RewriteRule (^|/)\.(?!well-known) - [F,L]
 
-    # 3. KEAMANAN: BLOKIR AKSES LANGSUNG KE FOLDER SYSTEM LARAVEL
-    RewriteRule ^(app|bootstrap|config|database|resources|routes|storage|tests|vendor)(/.*)?$ - [F,L]
+    # 4. KEAMANAN: Blokir folder internal sistem Laravel
+    RewriteRule ^(app|bootstrap|config|database|resources|routes|tests|vendor)(/.*)?$ - [F,L]
 
-    # 4. KEAMANAN: BLOKIR FILE KONFIGURASI SENSITIF DI ROOT
+    # 5. KEAMANAN: Lindungi folder internal storage (logs, framework, app), tanpa mengganggu public media
+    RewriteRule ^storage/(app|framework|logs)(/.*)?$ - [F,L]
+
+    # 6. KEAMANAN: Blokir file konfigurasi sensitif di root
     RewriteRule ^(composer\.(json|lock)|package(-lock)?\.json|artisan|phpunit\.xml|\.env.*|vite\.config\.js|postcss\.config\.js|tailwind\.config\.js)$ - [F,L]
 
-    # 5. CANONICAL CLEAN URL: Hilangkan kata '/public/' jika diketik manual di browser
-    RewriteCond %{THE_REQUEST} /public/([^\s?]*) [NC]
-    RewriteRule ^ %1 [L,NE,R=301]
-
-    # 6. FORWARD UTAMA: Alihkan semua request publik ke folder public/
+    # 7. ROUTING UTAMA: Lempar semua request web lainnya ke folder public/
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L,QSA]
 </IfModule>
