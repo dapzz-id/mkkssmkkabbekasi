@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Rules\TurnstileRule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -41,12 +42,19 @@ class PasswordResetController extends Controller
      */
     public function sendResetLink(Request $request): RedirectResponse
     {
-        // Rate-limit: max 5 attempts per minute (handled by throttle middleware on route)
+        // Step 1: Validate email format early (fail early before invoking external security service)
         $request->validate([
             'email' => ['required', 'email'],
         ], [
             'email.required' => 'Masukkan alamat email Anda.',
             'email.email'    => 'Masukkan alamat email yang valid.',
+        ]);
+
+        // Step 2: Server-side Turnstile verification
+        $request->validate([
+            'cf-turnstile-response' => ['required', new TurnstileRule(action: 'forgot_password')],
+        ], [
+            'cf-turnstile-response.required' => 'Verifikasi keamanan diperlukan.',
         ]);
 
         // SECURITY: Always return a generic success response regardless of whether
