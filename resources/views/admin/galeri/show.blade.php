@@ -86,7 +86,7 @@
 
             <!-- Deskripsi Section -->
             <div class="pt-4 border-t border-slate-100">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Deskripsi Kegiatan</h3>
+                {{-- <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Deskripsi Kegiatan</h3> --}}
                 <div class="prose prose-slate max-w-none text-sm text-slate-700 leading-relaxed space-y-2">
                     {!! nl2br($galeri->deskripsi) !!}
                 </div>
