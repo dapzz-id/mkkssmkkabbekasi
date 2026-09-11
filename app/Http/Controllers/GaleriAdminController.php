@@ -31,7 +31,7 @@ class GaleriAdminController extends Controller
     {
         $data = Konten::all();
         if (Auth::user()->role == 'admin') {
-            $data = Konten::where('id_divisi', Auth::user()->id_divisi)->get();
+            $data = Konten::where('divisi_uuid', Auth::user()->divisi_uuid)->get();
         }
         return view('admin.dashboard', compact('data'));
     }
@@ -44,38 +44,38 @@ class GaleriAdminController extends Controller
 
     public function store(Request $request)
     {
-        $isDivisiUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $request->input('id_divisi'));
-        $divisiRule = $isDivisiUuid ? 'required|exists:divisi,uuid' : 'required|exists:divisi,id';
-
         $validatedData = $request->validate([
-            'id_divisi' => $divisiRule,
+            'divisi_uuid' => 'nullable|string',
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required',
             'media' => 'required|array|min:1',
-            'media.*' => 'required|file',
+            'media.*' => 'file',
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string|max:1000',
             'slug' => ['nullable', 'string', 'max:191', 'regex:/^[a-zA-Z0-9\-_]+$/'],
         ], [
-            'id_divisi.required' => 'Pilih divisi',
             'judul.required' => 'Masukkan judul',
             'deskripsi.required' => 'Masukkan deskripsi',
-            'media.required' => 'Unggah setidaknya satu media',
+            'media.required' => 'Unggah setidaknya satu foto atau video',
+            'media.min' => 'Unggah setidaknya satu foto atau video',
             'media.*.file' => 'File yang diunggah harus berupa file yang valid',
             'seo_title.max' => 'SEO Title maksimal 255 karakter',
             'seo_description.max' => 'Meta Description maksimal 1000 karakter',
-            'slug.regex' => 'Slug hanya boleh berisi huruf, angka, tanda hubung (-), dan garis bawah (_)',
+            'slug.regex' => 'Slug hanya boleh berisi huruf, angka, tanda hubung (-), dan garis bawah (_).',
+            'slug.max' => 'Slug maksimal 191 karakter',
         ]);
 
-        if (Auth::user()->role == 'admin') {
-            $validatedData['id_divisi'] = Auth::user()->id_divisi;
-            $validatedData['divisi_uuid'] = Auth::user()->divisi_uuid;
-        } else {
-            $divisi = Divisi::whereIdentifier($validatedData['id_divisi'])->first();
-            if ($divisi) {
-                $validatedData['id_divisi'] = $divisi->id;
-                $validatedData['divisi_uuid'] = $divisi->uuid;
+        if (Auth::user()->role === 'superadmin') {
+            $divisiInput = $request->input('divisi_uuid');
+            $divisi = Divisi::where('uuid', $divisiInput)
+                ->orWhere('nama_divisi', $divisiInput)
+                ->first();
+            if (!$divisi) {
+                throw ValidationException::withMessages(['divisi_uuid' => 'Pilih divisi yang valid.']);
             }
+            $validatedData['divisi_uuid'] = $divisi->uuid;
+        } else {
+            $validatedData['divisi_uuid'] = Auth::user()->divisi_uuid;
         }
 
         // SEO Field Processing (Auto-fallback & Deterministic Collision Resolution)
@@ -114,7 +114,6 @@ class GaleriAdminController extends Controller
             }
 
             $validatedData['url_media'] = json_encode($urls);
-            $validatedData['id_user'] = Auth::user()->id;
             $validatedData['user_uuid'] = Auth::user()->uuid;
             $validatedData['tanggal_upload'] = now();
 
@@ -170,9 +169,7 @@ class GaleriAdminController extends Controller
             $galeri = Konten::with(['divisi', 'user'])->where('slug', $identifier)->firstOrFail();
         }
 
-        $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
-            ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
-            : ($galeri->id_divisi != Auth::user()->id_divisi);
+        $isMismatch = ($galeri->divisi_uuid !== Auth::user()->divisi_uuid);
 
         if (Auth::user()->role === 'admin' && $isMismatch) {
             abort(403, 'Akses ditolak. Anda hanya dapat melihat galeri divisi Anda.');
@@ -185,9 +182,7 @@ class GaleriAdminController extends Controller
     {
         $galeri = Konten::findByIdentifierOrFail($id);
 
-        $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
-            ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
-            : ($galeri->id_divisi != Auth::user()->id_divisi);
+        $isMismatch = ($galeri->divisi_uuid !== Auth::user()->divisi_uuid);
 
         if (Auth::user()->role === 'admin' && $isMismatch) {
             abort(403, 'Akses ditolak. Anda hanya dapat mengelola galeri divisi Anda.');
@@ -201,19 +196,14 @@ class GaleriAdminController extends Controller
     {
         $galeri = Konten::findByIdentifierOrFail($id);
 
-        $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
-            ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
-            : ($galeri->id_divisi != Auth::user()->id_divisi);
+        $isMismatch = ($galeri->divisi_uuid !== Auth::user()->divisi_uuid);
 
         if (Auth::user()->role === 'admin' && $isMismatch) {
             abort(403, 'Akses ditolak. Anda hanya dapat mengelola galeri divisi Anda.');
         }
 
-        $isDivisiUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $request->input('id_divisi'));
-        $divisiRule = $isDivisiUuid ? 'required|exists:divisi,uuid' : 'required|exists:divisi,id';
-
         $validatedData = $request->validate([
-            'id_divisi' => $divisiRule,
+            'divisi_uuid' => 'nullable|string',
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required',
             'media' => 'sometimes|array',
@@ -223,7 +213,6 @@ class GaleriAdminController extends Controller
             'seo_description' => 'nullable|string|max:1000',
             'slug' => ['nullable', 'string', 'max:191', 'regex:/^[a-zA-Z0-9\-_]+$/'],
         ], [
-            'id_divisi.required' => 'Pilih divisi',
             'judul.required' => 'Masukkan judul',
             'deskripsi.required' => 'Masukkan deskripsi',
             'media.*.file' => 'File yang diunggah harus berupa file yang valid',
@@ -233,20 +222,23 @@ class GaleriAdminController extends Controller
         ]);
 
         if (Auth::user()->role == 'admin') {
-            $validatedData['id_divisi'] = Auth::user()->id_divisi;
             $validatedData['divisi_uuid'] = Auth::user()->divisi_uuid;
         } else {
-            $divisi = Divisi::whereIdentifier($validatedData['id_divisi'])->first();
-            if ($divisi) {
-                $validatedData['id_divisi'] = $divisi->id;
-                $validatedData['divisi_uuid'] = $divisi->uuid;
+            $divisiInput = $request->input('divisi_uuid');
+            if ($divisiInput) {
+                $divisi = Divisi::where('uuid', $divisiInput)
+                    ->orWhere('nama_divisi', $divisiInput)
+                    ->first();
+                if ($divisi) {
+                    $validatedData['divisi_uuid'] = $divisi->uuid;
+                }
             }
         }
 
         // SEO Field Processing for Edit
         if ($request->has('slug')) {
             $rawSlug = !empty($validatedData['slug']) ? $validatedData['slug'] : ($galeri->slug ?: $validatedData['judul']);
-            $validatedData['slug'] = $this->generateUniqueSlug($rawSlug, (int) $galeri->id);
+            $validatedData['slug'] = $this->generateUniqueSlug($rawSlug, $galeri->uuid);
         }
 
         if ($request->has('seo_title')) {
@@ -321,9 +313,7 @@ class GaleriAdminController extends Controller
 
             $lockedGaleri = Konten::whereIdentifier($id)->lockForUpdate()->firstOrFail();
 
-            $isMismatch = (!empty($lockedGaleri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
-                ? ($lockedGaleri->divisi_uuid !== Auth::user()->divisi_uuid)
-                : ($lockedGaleri->id_divisi != Auth::user()->id_divisi);
+            $isMismatch = ($lockedGaleri->divisi_uuid !== Auth::user()->divisi_uuid);
 
             if (Auth::user()->role === 'admin' && $isMismatch) {
                 abort(403, 'Akses ditolak.');
@@ -381,9 +371,7 @@ class GaleriAdminController extends Controller
                 return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan'], 404);
             }
 
-            $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
-                ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
-                : ($galeri->id_divisi != Auth::user()->id_divisi);
+            $isMismatch = ($galeri->divisi_uuid !== Auth::user()->divisi_uuid);
 
             if (Auth::user()->role === 'admin' && $isMismatch) {
                 DB::rollBack();
@@ -420,17 +408,17 @@ class GaleriAdminController extends Controller
     /**
      * Generate deterministic, collision-free URL-safe slug
      */
-    protected function generateUniqueSlug(string $rawSlug, ?int $ignoreId = null): string
+    protected function generateUniqueSlug(string $rawSlug, ?string $ignoreUuid = null): string
     {
         $base = Str::slug($rawSlug);
         if ($base === '' || ctype_digit($base)) {
-            $base = 'konten-' . ($ignoreId ?: time());
+            $base = 'konten-' . ($ignoreUuid ?: time());
         }
 
         $slug = $base;
         $counter = 2;
 
-        while (Konten::where('slug', $slug)->when($ignoreId, fn($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+        while (Konten::where('slug', $slug)->when($ignoreUuid, fn($q) => $q->where('uuid', '!=', $ignoreUuid))->exists()) {
             $slug = $base . '-' . $counter;
             $counter++;
         }

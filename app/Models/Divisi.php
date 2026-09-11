@@ -20,20 +20,12 @@ class Divisi extends Model
         return $this->hasMany(User::class, 'divisi_uuid', 'uuid');
     }
 
-    public function userById() {
-        return $this->hasMany(User::class, 'id_divisi', 'id');
-    }
-
     public function usersByUuid() {
         return $this->hasMany(User::class, 'divisi_uuid', 'uuid');
     }
 
     public function konten() {
         return $this->hasMany(Konten::class, 'divisi_uuid', 'uuid');
-    }
-
-    public function kontenById() {
-        return $this->hasMany(Konten::class, 'id_divisi', 'id');
     }
 
     public function kontenByUuid() {

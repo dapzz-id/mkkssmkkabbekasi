@@ -35,7 +35,7 @@ class GallerySeoTest extends TestCase
             'email' => 'superadmin_seo@example.com',
             'password' => bcrypt('password123'),
             'role' => 'superadmin',
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
         ]);
 
         $this->adminDivisiA = User::create([
@@ -44,7 +44,7 @@ class GallerySeoTest extends TestCase
             'email' => 'admin_a@example.com',
             'password' => bcrypt('password123'),
             'role' => 'admin',
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
         ]);
 
         $this->adminDivisiB = User::create([
@@ -53,7 +53,7 @@ class GallerySeoTest extends TestCase
             'email' => 'admin_b@example.com',
             'password' => bcrypt('password123'),
             'role' => 'admin',
-            'id_divisi' => $this->divisiB->id,
+            'divisi_uuid' => $this->divisiB->uuid,
         ]);
     }
 
@@ -75,7 +75,7 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $response = $this->post('/galeri-kelola', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Rapat Koordinasi MKKS SMK Kab Bekasi 2026',
             'deskripsi' => '<p>Kegiatan koordinasi rutin pengurus <b>MKKS SMK</b> Kabupaten Bekasi.</p>',
             'media' => [$this->createValidJpgFile('photo.jpg')],
@@ -99,7 +99,7 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $response = $this->post('/galeri-kelola', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Rapat Pleno 2026',
             'deskripsi' => 'Deskripsi rapat pleno.',
             'media' => [$this->createValidJpgFile('rapat.jpg')],
@@ -123,8 +123,8 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $konten = Konten::create([
-            'id_user' => $this->superadmin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->superadmin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Awal',
             'deskripsi' => 'Deskripsi awal',
             'url_media' => json_encode(['/storage/media/original.jpg']),
@@ -134,8 +134,8 @@ class GallerySeoTest extends TestCase
             'slug' => 'judul-awal',
         ]);
 
-        $response = $this->put('/galeri-kelola/' . $konten->id, [
-            'id_divisi' => $this->divisiA->id,
+        $response = $this->put('/galeri-kelola/' . $konten->uuid, [
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Baru Diubah',
             'deskripsi' => 'Deskripsi baru diubah',
             'keep_media' => ['/storage/media/original.jpg'],
@@ -157,8 +157,8 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $konten = Konten::create([
-            'id_user' => $this->superadmin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->superadmin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Khusus',
             'deskripsi' => 'Deskripsi khusus',
             'url_media' => json_encode(['/storage/media/original.jpg']),
@@ -168,8 +168,8 @@ class GallerySeoTest extends TestCase
             'slug' => 'slug-khusus-eksisting',
         ]);
 
-        $response = $this->put('/galeri-kelola/' . $konten->id, [
-            'id_divisi' => $this->divisiA->id,
+        $response = $this->put('/galeri-kelola/' . $konten->uuid, [
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Berubah Tapi SEO Tidak Dikirim',
             'deskripsi' => 'Deskripsi berubah',
             'keep_media' => ['/storage/media/original.jpg'],
@@ -188,8 +188,8 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $konten = Konten::create([
-            'id_user' => $this->superadmin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->superadmin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Workshop IT 2026',
             'deskripsi' => '<p>Pelatihan teknologi untuk siswa SMK.</p>',
             'url_media' => json_encode(['/storage/media/original.jpg']),
@@ -199,8 +199,8 @@ class GallerySeoTest extends TestCase
             'slug' => null,
         ]);
 
-        $response = $this->put('/galeri-kelola/' . $konten->id, [
-            'id_divisi' => $this->divisiA->id,
+        $response = $this->put('/galeri-kelola/' . $konten->uuid, [
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Workshop IT 2026',
             'deskripsi' => '<p>Pelatihan teknologi untuk siswa SMK.</p>',
             'keep_media' => ['/storage/media/original.jpg'],
@@ -222,7 +222,7 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $response = $this->post('/galeri-kelola', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Valid',
             'deskripsi' => 'Deskripsi valid',
             'media' => [$this->createValidJpgFile('photo.jpg')],
@@ -238,7 +238,7 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $response = $this->post('/galeri-kelola', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Valid',
             'deskripsi' => 'Deskripsi valid',
             'media' => [$this->createValidJpgFile('photo.jpg')],
@@ -254,7 +254,7 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $response = $this->post('/galeri-kelola', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Valid',
             'deskripsi' => 'Deskripsi valid',
             'media' => [$this->createValidJpgFile('photo.jpg')],
@@ -270,7 +270,7 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $response = $this->post('/galeri-kelola', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Judul Valid',
             'deskripsi' => 'Deskripsi valid',
             'media' => [$this->createValidJpgFile('photo.jpg')],
@@ -289,7 +289,7 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $this->post('/galeri-kelola', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Atomic Test Title',
             'deskripsi' => 'Atomic Test Deskripsi',
             'media' => [$this->createValidJpgFile('atomic.jpg')],
@@ -317,7 +317,7 @@ class GallerySeoTest extends TestCase
 
         try {
             $this->post('/galeri-kelola', [
-                'id_divisi' => $this->divisiA->id,
+                'divisi_uuid' => $this->divisiA->uuid,
                 'judul' => 'Crash Gallery Test',
                 'deskripsi' => 'Deskripsi Crash',
                 'media' => [$this->createValidJpgFile('crash.jpg')],
@@ -342,8 +342,8 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->adminDivisiA);
 
         $kontenDivisiB = Konten::create([
-            'id_user' => $this->superadmin->id,
-            'id_divisi' => $this->divisiB->id,
+            'user_uuid' => $this->superadmin->uuid,
+            'divisi_uuid' => $this->divisiB->uuid,
             'judul' => 'Galeri Divisi B',
             'deskripsi' => 'Deskripsi Divisi B',
             'url_media' => json_encode(['/storage/media/b.jpg']),
@@ -352,8 +352,8 @@ class GallerySeoTest extends TestCase
             'slug' => 'original-seo-b',
         ]);
 
-        $response = $this->put('/galeri-kelola/' . $kontenDivisiB->id, [
-            'id_divisi' => $this->divisiB->id,
+        $response = $this->put('/galeri-kelola/' . $kontenDivisiB->uuid, [
+            'divisi_uuid' => $this->divisiB->uuid,
             'judul' => 'Hacked by Divisi A',
             'deskripsi' => 'Hacked Deskripsi',
             'keep_media' => ['/storage/media/b.jpg'],
@@ -374,8 +374,8 @@ class GallerySeoTest extends TestCase
         $this->actingAs($this->superadmin);
 
         $kontenDivisiB = Konten::create([
-            'id_user' => $this->adminDivisiB->id,
-            'id_divisi' => $this->divisiB->id,
+            'user_uuid' => $this->adminDivisiB->uuid,
+            'divisi_uuid' => $this->divisiB->uuid,
             'judul' => 'Galeri Divisi B Awal',
             'deskripsi' => 'Deskripsi Divisi B',
             'url_media' => json_encode(['/storage/media/b.jpg']),
@@ -384,8 +384,8 @@ class GallerySeoTest extends TestCase
             'slug' => 'galeri-divisi-b-awal',
         ]);
 
-        $response = $this->put('/galeri-kelola/' . $kontenDivisiB->id, [
-            'id_divisi' => $this->divisiB->id,
+        $response = $this->put('/galeri-kelola/' . $kontenDivisiB->uuid, [
+            'divisi_uuid' => $this->divisiB->uuid,
             'judul' => 'Superadmin Updated Title',
             'deskripsi' => 'Superadmin Updated Deskripsi',
             'keep_media' => ['/storage/media/b.jpg'],
@@ -404,8 +404,8 @@ class GallerySeoTest extends TestCase
     public function test_public_detail_page_renders_dynamic_seo_and_open_graph_metadata()
     {
         $konten = Konten::create([
-            'id_user' => $this->superadmin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->superadmin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Public Gallery Showcase',
             'deskripsi' => 'Rangkuman kegiatan pameran inovasi SMK se-Kabupaten Bekasi.',
             'url_media' => json_encode(['/storage/media/showcase.jpg']),
@@ -430,8 +430,8 @@ class GallerySeoTest extends TestCase
     public function test_legacy_numeric_id_redirects_301_to_slug()
     {
         $konten = Konten::create([
-            'id_user' => $this->superadmin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->superadmin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Rapat Pleno Legacy',
             'deskripsi' => 'Deskripsi rapat pleno',
             'url_media' => json_encode(['/storage/media/pleno.jpg']),
@@ -439,7 +439,7 @@ class GallerySeoTest extends TestCase
             'slug' => 'rapat-pleno-legacy',
         ]);
 
-        $response = $this->get('/konten/' . $konten->id);
+        $response = $this->get('/konten/' . $konten->uuid);
         $response->assertStatus(301);
         $response->assertRedirect('/konten/rapat-pleno-legacy');
     }
@@ -448,8 +448,8 @@ class GallerySeoTest extends TestCase
     public function test_sitemap_xml_renders_correctly_with_slugs()
     {
         $konten = Konten::create([
-            'id_user' => $this->superadmin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->superadmin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Agenda Bimtek 2026',
             'deskripsi' => 'Deskripsi bimtek kurikulum merdeka',
             'url_media' => json_encode(['/storage/media/bimtek.jpg']),

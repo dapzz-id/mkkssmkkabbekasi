@@ -39,7 +39,7 @@ class SecureUploadTest extends TestCase
             'email' => 'superadmin@example.com',
             'password' => bcrypt('password123'),
             'role' => 'superadmin',
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
         ]);
 
         $this->admin = User::create([
@@ -48,7 +48,7 @@ class SecureUploadTest extends TestCase
             'email' => 'admin@example.com',
             'password' => bcrypt('password123'),
             'role' => 'admin',
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
         ]);
 
         $this->validator = new SecureUploadValidator();
@@ -367,7 +367,7 @@ class SecureUploadTest extends TestCase
         $mp4 = $this->createValidMp4('gallery2.mp4');
 
         $response = $this->actingAs($this->admin)->post('/gallery', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Kegiatan Workshop Robotik',
             'deskripsi' => 'Pelaksanaan workshop robotik SMK Bekasi',
             'media' => [$img, $mp4],
@@ -376,7 +376,7 @@ class SecureUploadTest extends TestCase
         $response->assertRedirect('/gallery');
         $this->assertDatabaseHas('konten', [
             'judul' => 'Kegiatan Workshop Robotik',
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
         ]);
 
         $konten = Konten::where('judul', 'Kegiatan Workshop Robotik')->first();
@@ -389,8 +389,8 @@ class SecureUploadTest extends TestCase
     public function test_gallery_edit_preserves_old_media_and_appends_new_media(): void
     {
         $initialKonten = Konten::create([
-            'id_user' => $this->admin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->admin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Galeri Awal',
             'deskripsi' => 'Deskripsi awal',
             'tanggal_upload' => now(),
@@ -402,8 +402,8 @@ class SecureUploadTest extends TestCase
 
         $newImg = $this->createValidImage('new_photo_3.png', 'png');
 
-        $response = $this->actingAs($this->admin)->put("/gallery/{$initialKonten->id}", [
-            'id_divisi' => $this->divisiA->id,
+        $response = $this->actingAs($this->admin)->put("/gallery/{$initialKonten->uuid}", [
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Galeri Diperbarui',
             'deskripsi' => 'Deskripsi baru',
             'keep_media' => ['/storage/media/old_photo_1.jpg', '/storage/media/old_photo_2.jpg'],
@@ -412,7 +412,7 @@ class SecureUploadTest extends TestCase
 
         $response->assertRedirect('/gallery');
 
-        $updated = Konten::find($initialKonten->id);
+        $updated = Konten::find($initialKonten->uuid);
         $finalUrls = json_decode($updated->url_media, true);
 
         // Expect exactly 3 media items: 2 kept old + 1 appended new
@@ -426,8 +426,8 @@ class SecureUploadTest extends TestCase
     {
         // Gallery 1
         $galeri1 = Konten::create([
-            'id_user' => $this->admin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->admin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Galeri 1',
             'deskripsi' => 'Desc 1',
             'tanggal_upload' => now(),
@@ -435,8 +435,8 @@ class SecureUploadTest extends TestCase
         ]);
 
         // Attempt to inject foreign media into Galeri 1
-        $response = $this->actingAs($this->admin)->put("/gallery/{$galeri1->id}", [
-            'id_divisi' => $this->divisiA->id,
+        $response = $this->actingAs($this->admin)->put("/gallery/{$galeri1->uuid}", [
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Galeri 1 Edited',
             'deskripsi' => 'Desc 1 Edited',
             'keep_media' => [
@@ -448,7 +448,7 @@ class SecureUploadTest extends TestCase
 
         $response->assertRedirect('/gallery');
 
-        $fresh = Konten::find($galeri1->id);
+        $fresh = Konten::find($galeri1->uuid);
         $mediaList = json_decode($fresh->url_media, true);
 
         // Foreign media must be strictly filtered out! Only galeri1_pic.jpg kept.
@@ -464,8 +464,8 @@ class SecureUploadTest extends TestCase
         Storage::disk('public')->put('media/to_be_kept.jpg', 'keep content');
 
         $galeri = Konten::create([
-            'id_user' => $this->admin->id,
-            'id_divisi' => $this->divisiA->id,
+            'user_uuid' => $this->admin->uuid,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Galeri Hapus Sebagian',
             'deskripsi' => 'Desc',
             'tanggal_upload' => now(),
@@ -476,8 +476,8 @@ class SecureUploadTest extends TestCase
         ]);
 
         // Admin only sends 'to_be_kept.jpg' in keep_media
-        $response = $this->actingAs($this->admin)->put("/gallery/{$galeri->id}", [
-            'id_divisi' => $this->divisiA->id,
+        $response = $this->actingAs($this->admin)->put("/gallery/{$galeri->uuid}", [
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Galeri Tetap Ada',
             'deskripsi' => 'Desc',
             'keep_media' => ['/storage/media/to_be_kept.jpg'],
@@ -511,7 +511,7 @@ class SecureUploadTest extends TestCase
         $initialFiles = Storage::disk('public')->allFiles('media');
 
         $response = $this->actingAs($this->admin)->post('/gallery', [
-            'id_divisi' => $this->divisiA->id,
+            'divisi_uuid' => $this->divisiA->uuid,
             'judul' => 'Galeri Gagal DB',
             'deskripsi' => 'Desc',
             'media' => [$newImg],
@@ -553,13 +553,13 @@ class SecureUploadTest extends TestCase
             'url_image' => 'data:image/png;base64,ORIGINAL_LOGO_DATA_KEEP_ME',
         ]);
 
-        $response = $this->actingAs($this->superadmin)->put("/sponsor/{$sponsor->id}", [
+        $response = $this->actingAs($this->superadmin)->put("/sponsor/{$sponsor->uuid}", [
             'nama' => 'Sponsor Nama Baru',
         ]);
 
         $response->assertRedirect('/sponsor');
 
-        $fresh = Sponsor::find($sponsor->id);
+        $fresh = Sponsor::find($sponsor->uuid);
         $this->assertEquals('Sponsor Nama Baru', $fresh->nama);
         $this->assertEquals('data:image/png;base64,ORIGINAL_LOGO_DATA_KEEP_ME', $fresh->url_image);
     }
@@ -614,14 +614,14 @@ class SecureUploadTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->actingAs($this->superadmin)->put("/pimpinan/{$pimpinan->id}", [
+        $response = $this->actingAs($this->superadmin)->put("/pimpinan/{$pimpinan->uuid}", [
             'nama' => 'Pimpinan 1 Ganti Nama',
             'jabatan' => 'Sekretaris Utama',
         ]);
 
         $response->assertRedirect('/pimpinan');
 
-        $fresh = Pimpinan::find($pimpinan->id);
+        $fresh = Pimpinan::find($pimpinan->uuid);
         $this->assertEquals('Pimpinan 1 Ganti Nama', $fresh->nama);
         $this->assertEquals('Sekretaris Utama', $fresh->jabatan);
         $this->assertEquals('/storage/pimpinan/old_leader_photo.jpg', $fresh->foto);

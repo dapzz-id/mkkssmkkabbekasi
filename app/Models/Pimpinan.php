@@ -38,11 +38,11 @@ class Pimpinan extends Model
     }
 
     /**
-     * Scope query to order leaders by display_order (urutan) ascending, then id ascending.
+     * Scope query to order leaders by display_order (urutan) ascending, then created_at, then uuid.
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('urutan', 'asc')->orderBy('id', 'asc');
+        return $query->orderBy('urutan', 'asc')->orderBy('created_at', 'asc')->orderBy('uuid', 'asc');
     }
 
     /**

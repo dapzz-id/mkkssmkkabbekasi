@@ -29,7 +29,7 @@ class UuidPrimaryKeyCutoverTest extends TestCase
     ];
 
     /**
-     * 1. Verify database schema: uuid is PRIMARY KEY, legacy id is AUTO_INCREMENT and indexed.
+     * 1. Verify database schema: uuid is PRIMARY KEY, legacy id column does NOT exist.
      */
     public function test_database_primary_key_is_uuid_on_all_six_domain_tables(): void
     {
@@ -47,17 +47,11 @@ class UuidPrimaryKeyCutoverTest extends TestCase
                 $this->assertNotEmpty($uuidCol);
                 $this->assertEquals('NO', $uuidCol[0]->Null, "Table {$table}.uuid must be NOT NULL.");
 
-                // C. Legacy id column exists, is BIGINT, and is AUTO_INCREMENT
+                // C. Legacy id column does NOT exist
                 $idCol = DB::select("SHOW COLUMNS FROM `{$table}` WHERE Field = 'id'");
-                $this->assertNotEmpty($idCol, "Legacy column 'id' must still exist on {$table}.");
-                $this->assertStringContainsString('bigint', strtolower($idCol[0]->Type));
-                $this->assertEquals('auto_increment', strtolower($idCol[0]->Extra));
-
-                // D. Legacy id column is indexed
-                $idIndexes = DB::select("SHOW INDEXES FROM `{$table}` WHERE Column_name = 'id'");
-                $this->assertNotEmpty($idIndexes, "Legacy column 'id' on {$table} must have an index.");
+                $this->assertEmpty($idCol, "Legacy column 'id' must NOT exist on {$table}.");
             } else {
-                // SQLite in-memory test runner (MySQL DDL skipped in SQLite)
+                // SQLite in-memory test runner
                 $cols = DB::select("PRAGMA table_info({$table})");
                 $hasUuid = false;
                 $hasId = false;
@@ -70,7 +64,7 @@ class UuidPrimaryKeyCutoverTest extends TestCase
                     }
                 }
                 $this->assertTrue($hasUuid, "Table {$table} must have uuid column in SQLite.");
-                $this->assertTrue($hasId, "Table {$table} must have id column in SQLite.");
+                $this->assertFalse($hasId, "Table {$table} must NOT have id column in SQLite.");
             }
         }
     }
@@ -204,14 +198,13 @@ class UuidPrimaryKeyCutoverTest extends TestCase
     }
 
     /**
-     * 5. Verify relationships use UUID foreign keys by default and legacy helpers still work.
+     * 5. Verify relationships use UUID foreign keys by default.
      */
     public function test_canonical_relationships_use_uuid(): void
     {
         $suffix = Str::random(6);
         $divisi = Divisi::create(['nama_divisi' => 'Rel Test ' . $suffix]);
         $this->assertTrue(Str::isUuid($divisi->uuid));
-        $this->assertNotEmpty($divisi->id);
 
         $user = User::create([
             'name' => 'Rel User ' . $suffix,
@@ -224,7 +217,6 @@ class UuidPrimaryKeyCutoverTest extends TestCase
         ]);
         $this->assertTrue(Str::isUuid($user->uuid));
         $this->assertEquals($divisi->uuid, $user->divisi_uuid);
-        $this->assertEquals($divisi->id, $user->id_divisi);
 
         $konten = Konten::create([
             'user_uuid' => $user->uuid,
@@ -245,10 +237,10 @@ class UuidPrimaryKeyCutoverTest extends TestCase
         $this->assertTrue($divisi->konten->contains('uuid', $konten->uuid));
         $this->assertTrue($user->konten->contains('uuid', $konten->uuid));
 
-        // Legacy relationship helpers
-        $this->assertEquals($divisi->id, $user->divisiById->id);
-        $this->assertEquals($user->id, $konten->userById->id);
-        $this->assertEquals($divisi->id, $konten->divisiById->id);
+        // UUID relationship helpers
+        $this->assertEquals($divisi->uuid, $user->divisiByUuid->uuid);
+        $this->assertEquals($user->uuid, $konten->userByUuid->uuid);
+        $this->assertEquals($divisi->uuid, $konten->divisiByUuid->uuid);
 
         // Clean up
         $konten->delete();
@@ -257,7 +249,7 @@ class UuidPrimaryKeyCutoverTest extends TestCase
     }
 
     /**
-     * 6. Verify Model::find() and findByIdentifier() resolve both UUID and legacy numeric ID.
+     * 6. Verify Model::find() and resolveRouteBinding() resolve canonical UUID.
      */
     public function test_dual_identifier_lookup_and_route_model_binding(): void
     {
@@ -277,24 +269,14 @@ class UuidPrimaryKeyCutoverTest extends TestCase
         $this->assertNotNull($byUuid);
         $this->assertEquals($pimpinan->uuid, $byUuid->uuid);
 
-        // Find by legacy numeric ID
-        $byNumericId = Pimpinan::find($pimpinan->id);
-        $this->assertNotNull($byNumericId);
-        $this->assertEquals($pimpinan->uuid, $byNumericId->uuid);
-        $this->assertEquals($pimpinan->id, $byNumericId->id);
-
-        // Route model binding resolution
+        // Route model binding resolution by UUID
         $resolvedByUuid = (new Pimpinan())->resolveRouteBinding($pimpinan->uuid);
         $this->assertNotNull($resolvedByUuid);
         $this->assertEquals($pimpinan->uuid, $resolvedByUuid->uuid);
-
-        $resolvedById = (new Pimpinan())->resolveRouteBinding($pimpinan->id);
-        $this->assertNotNull($resolvedById);
-        $this->assertEquals($pimpinan->uuid, $resolvedById->uuid);
     }
 
     /**
-     * 7. Verify queued job / notification deserialization compatibility with both numeric and UUID IDs.
+     * 7. Verify queued job / notification deserialization compatibility with UUID identifiers.
      */
     public function test_queue_restoration_compatibility_with_numeric_and_uuid_identifiers(): void
     {
@@ -312,19 +294,14 @@ class UuidPrimaryKeyCutoverTest extends TestCase
             ]);
         }
 
-        // 1. Restoration using canonical UUID string
+        // Restoration using canonical UUID string
         $restoredByUuid = (new User())->newQueryForRestoration($user->uuid)->first();
         $this->assertNotNull($restoredByUuid);
         $this->assertEquals($user->uuid, $restoredByUuid->uuid);
-
-        // 2. Restoration using legacy numeric ID
-        $restoredByNumeric = (new User())->newQueryForRestoration($user->id)->first();
-        $this->assertNotNull($restoredByNumeric);
-        $this->assertEquals($user->uuid, $restoredByNumeric->uuid);
     }
 
     /**
-     * 8. Verify public slug URL 301 redirection from legacy numeric ID and UUID.
+     * 8. Verify public slug URL 301 redirection from UUID.
      */
     public function test_public_and_admin_urls_redirect_to_canonical_slug(): void
     {
@@ -356,11 +333,6 @@ class UuidPrimaryKeyCutoverTest extends TestCase
             'slug' => 'slug-redirection-test-' . Str::random(5),
         ]);
 
-        // Public numeric ID -> 301 to canonical slug
-        $resPublicNum = $this->get('/konten/' . $konten->id);
-        $resPublicNum->assertStatus(301);
-        $resPublicNum->assertRedirect(route('konten.show', ['slug' => $konten->slug]));
-
         // Public UUID -> 301 to canonical slug
         $resPublicUuid = $this->get('/konten/' . $konten->uuid);
         $resPublicUuid->assertStatus(301);
@@ -370,10 +342,10 @@ class UuidPrimaryKeyCutoverTest extends TestCase
         $resPublicSlug = $this->get('/konten/' . $konten->slug);
         $resPublicSlug->assertStatus(200);
 
-        // Admin gallery numeric ID -> 301 to slug URL
-        $resAdminNum = $this->actingAs($user)->get('/gallery/' . $konten->id);
-        $resAdminNum->assertStatus(301);
-        $resAdminNum->assertRedirect('/gallery/' . $konten->slug);
+        // Admin gallery UUID -> 301 to slug URL
+        $resAdminUuid = $this->actingAs($user)->get('/gallery/' . $konten->uuid);
+        $resAdminUuid->assertStatus(301);
+        $resAdminUuid->assertRedirect('/gallery/' . $konten->slug);
 
         // Clean up
         $konten->delete();
@@ -389,7 +361,6 @@ class UuidPrimaryKeyCutoverTest extends TestCase
         // 1. Divisi
         $divisi = Divisi::create(['nama_divisi' => 'CRUD Divisi ' . $rand]);
         $this->assertTrue(Str::isUuid($divisi->uuid));
-        $this->assertNotEmpty($divisi->id);
         $divisi->update(['nama_divisi' => 'CRUD Divisi ' . $rand . ' Updated']);
         $this->assertEquals('CRUD Divisi ' . $rand . ' Updated', Divisi::find($divisi->uuid)->nama_divisi);
 
@@ -404,7 +375,6 @@ class UuidPrimaryKeyCutoverTest extends TestCase
             'alamat' => 'Alamat CRUD',
         ]);
         $this->assertTrue(Str::isUuid($user->uuid));
-        $this->assertNotEmpty($user->id);
         $user->update(['name' => 'CRUD User ' . $rand . ' Renamed']);
         $this->assertEquals('CRUD User ' . $rand . ' Renamed', User::find($user->uuid)->name);
 

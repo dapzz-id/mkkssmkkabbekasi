@@ -23,7 +23,7 @@ class GalleryFilterTest extends TestCase
         $this->divisi = Divisi::create(['nama_divisi' => 'Multimedia']);
 
         $this->user = User::create([
-            'id_divisi' => $this->divisi->id,
+            'divisi_uuid' => $this->divisi->uuid,
             'name' => 'Admin Gallery',
             'username' => 'admingallery',
             'email' => 'gallery@mkkssmkbekasi.or.id',
@@ -42,8 +42,8 @@ class GalleryFilterTest extends TestCase
     public function test_gallery_displays_all_contents_by_default(): void
     {
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'url_media' => json_encode(['/storage/konten/foto1.jpg']),
             'tanggal_upload' => '2026-01-10 10:00:00',
             'judul' => 'Kegiatan Workshop SMK',
@@ -60,8 +60,8 @@ class GalleryFilterTest extends TestCase
     public function test_gallery_filters_by_search_keyword_in_title_and_description(): void
     {
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'url_media' => json_encode(['/storage/konten/foto1.jpg']),
             'tanggal_upload' => '2026-01-10 10:00:00',
             'judul' => 'Lomba Kompetensi Siswa',
@@ -69,8 +69,8 @@ class GalleryFilterTest extends TestCase
         ]);
 
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'url_media' => json_encode(['/storage/konten/foto2.jpg']),
             'tanggal_upload' => '2026-01-11 10:00:00',
             'judul' => 'Rapat Koordinasi Kepala Sekolah',
@@ -93,8 +93,8 @@ class GalleryFilterTest extends TestCase
     public function test_gallery_filters_by_media_type(): void
     {
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'url_media' => json_encode(['/storage/konten/image_kegiatan.png']),
             'tanggal_upload' => '2026-01-10 10:00:00',
             'judul' => 'Dokumentasi Foto LKS',
@@ -102,8 +102,8 @@ class GalleryFilterTest extends TestCase
         ]);
 
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'url_media' => json_encode(['/storage/konten/video_profil.mp4']),
             'tanggal_upload' => '2026-01-11 10:00:00',
             'judul' => 'Video Profil MKKS',
@@ -127,8 +127,8 @@ class GalleryFilterTest extends TestCase
     {
         for ($i = 1; $i <= 15; $i++) {
             Konten::create([
-                'id_user' => $this->user->id,
-                'id_divisi' => $this->divisi->id,
+                'user_uuid' => $this->user->uuid,
+                'divisi_uuid' => $this->divisi->uuid,
                 'url_media' => json_encode(["/storage/konten/item{$i}.jpg"]),
                 'tanggal_upload' => sprintf('2026-01-%02d 10:00:00', $i),
                 'judul' => "Konten Acara Ke-{$i}",
@@ -154,8 +154,8 @@ class GalleryFilterTest extends TestCase
     {
         for ($i = 1; $i <= 6; $i++) {
             Konten::create([
-                'id_user' => $this->user->id,
-                'id_divisi' => $this->divisi->id,
+                'user_uuid' => $this->user->uuid,
+                'divisi_uuid' => $this->divisi->uuid,
                 'url_media' => "/storage/konten/item{$i}.jpg",
                 'tanggal_upload' => "2026-01-{$i} 10:00:00",
                 'judul' => "Acara Workshop Ke-{$i}",
@@ -177,8 +177,8 @@ class GalleryFilterTest extends TestCase
         $this->getJson('/gallery/suggestions?term=work')->assertStatus(200)->assertJson([]);
 
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'url_media' => json_encode(['/storage/konten/item1.jpg']),
             'tanggal_upload' => '2026-01-01 10:00:00',
             'judul' => 'Workshop Robotika SMK',
@@ -218,7 +218,7 @@ class GalleryFilterTest extends TestCase
 
         // Superadmin for user & event
         $superAdmin = User::create([
-            'id_divisi' => $this->divisi->id,
+            'divisi_uuid' => $this->divisi->uuid,
             'name' => 'Super User',
             'username' => 'superuser',
             'email' => 'superuser@mkkssmkbekasi.or.id',
@@ -248,8 +248,8 @@ class GalleryFilterTest extends TestCase
         $divisiAkuntansi = Divisi::create(['nama_divisi' => 'Akuntansi']);
 
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $divisiAkuntansi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $divisiAkuntansi->uuid,
             'url_media' => json_encode(['/storage/konten/akuntansi.jpg']),
             'tanggal_upload' => '2026-02-01 10:00:00',
             'judul' => 'Olimpiade Akuntansi Keuangan',
@@ -258,7 +258,7 @@ class GalleryFilterTest extends TestCase
 
         // Superadmin can see all divisions
         $superAdmin = User::create([
-            'id_divisi' => $this->divisi->id,
+            'divisi_uuid' => $this->divisi->uuid,
             'name' => 'Super User Admin',
             'username' => 'superuseradmin',
             'email' => 'superuseradmin@mkkssmkbekasi.or.id',
@@ -286,8 +286,8 @@ class GalleryFilterTest extends TestCase
     public function test_gallery_suggestions_include_divisi_and_content_matches(): void
     {
         Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'url_media' => json_encode(['/storage/konten/item99.jpg']),
             'tanggal_upload' => '2026-02-01 10:00:00',
             'judul' => 'Workshop Animasi 3D',

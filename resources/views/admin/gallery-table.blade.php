@@ -110,7 +110,7 @@
                                 {{-- Edit Button (Blue) --}}
                                 <button type="button"
                                         class="btn-updateGallery w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                                        data-idGallery="{{ $konten->id }}"
+                                        data-idGallery="{{ $konten->uuid }}"
                                         title="Edit Galeri"
                                         aria-label="Edit Galeri {{ $konten->judul }}">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -132,7 +132,7 @@
                                 {{-- Delete Button (Red) --}}
                                 <button type="button"
                                         class="btn-deleteGallery w-8 h-8 rounded-lg bg-red-600 hover:bg-red-700 active:bg-red-800 text-white flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                                        data-idGallery="{{ $konten->id }}"
+                                        data-idGallery="{{ $konten->uuid }}"
                                         data-namaGallery="{{ $konten->judul }}"
                                         title="Hapus Galeri"
                                         aria-label="Hapus Galeri {{ $konten->judul }}">
@@ -207,12 +207,12 @@
                     <div class="flex items-center gap-2">
                         <button type="button"
                                 class="btn-updateGallery w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                                data-idGallery="{{ $konten->id }}"
+                                data-idGallery="{{ $konten->uuid }}"
                                 title="Edit Galeri"
                                 aria-label="Edit Galeri {{ $konten->judul }}">
                             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                         </button>
-                        <a href="{{ url('/gallery/' . ($konten->slug ?: $konten->id)) }}"
+                        <a href="{{ url('/gallery/' . ($konten->slug ?: $konten->uuid)) }}"
                            class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
                            title="Lihat Detail Galeri"
                            aria-label="Lihat Detail {{ $konten->judul }}">
@@ -220,7 +220,7 @@
                         </a>
                         <button type="button"
                                 class="btn-deleteGallery w-9 h-9 rounded-xl bg-red-600 hover:bg-red-700 active:bg-red-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                                data-idGallery="{{ $konten->id }}"
+                                data-idGallery="{{ $konten->uuid }}"
                                 data-namaGallery="{{ $konten->judul }}"
                                 title="Hapus Galeri"
                                 aria-label="Hapus Galeri {{ $konten->judul }}">

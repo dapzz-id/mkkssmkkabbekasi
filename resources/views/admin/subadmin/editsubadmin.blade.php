@@ -17,7 +17,7 @@
                         Manage Account
                     </h1>
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
-                        Edit akun pengurus #{{ $subAdmin->id }}
+                        Edit akun pengurus
                     </p>
                 </div>
             </div>
@@ -34,7 +34,7 @@
         <div class="pt-1.5">
             <x-admin-breadcrumb :items="[
                 ['label' => 'Manage Account', 'url' => '/manage/user'],
-                ['label' => $subAdmin->id . '_edit']
+                ['label' => 'Edit Akun']
             ]" />
         </div>
     </div>
@@ -42,11 +42,11 @@
     <!-- MAIN FORM CARD -->
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h2 class="text-base font-bold text-slate-900">Form Edit Akun #{{ $subAdmin->id }}</h2>
+            <h2 class="text-base font-bold text-slate-900">Form Edit Akun</h2>
             <span class="text-xs text-slate-500 font-medium">* Wajib diisi</span>
         </div>
 
-        <form action="{{ route('subadmin.update', $subAdmin->id) }}" id="formEditUser" method="POST" class="p-6 sm:p-8 space-y-6">
+        <form action="{{ route('subadmin.update', $subAdmin->uuid) }}" id="formEditUser" method="POST" class="p-6 sm:p-8 space-y-6">
             @csrf
             @method('PUT')
 
@@ -125,7 +125,7 @@
                                 class="w-full pl-4 pr-10 py-2.5 bg-white border @error('divisi') border-rose-400 @else border-slate-300 focus:ring-blue-500 focus:border-blue-500 @enderror rounded-xl text-sm font-medium text-slate-800 focus:ring-2 shadow-2xs appearance-none transition-all cursor-pointer">
                             <option value="" disabled>Pilih Divisi</option>
                             @foreach($divisi as $item)
-                                <option value="{{ $item->id }}" {{ old('divisi', $subAdmin->id_divisi) == $item->id ? 'selected' : '' }}>
+                                <option value="{{ $item->uuid }}" {{ old('divisi', $subAdmin->divisi_uuid) == $item->uuid ? 'selected' : '' }}>
                                     {{ $item->nama_divisi }}
                                 </option>
                             @endforeach

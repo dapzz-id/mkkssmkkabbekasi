@@ -69,7 +69,7 @@ Route::get('/gallery', function(Request $request) {
 
     // Role authorization: regular admin only sees their assigned division
     if (Auth::user()->role === 'admin') {
-        $query->where('id_divisi', Auth::user()->id_divisi);
+        $query->where('divisi_uuid', Auth::user()->divisi_uuid);
     }
 
     // Server-side Search: Judul, Deskripsi (Konten), or Divisi name
@@ -120,9 +120,9 @@ Route::get('/gallery', function(Request $request) {
 
     // Server-side Date Ordering: newest vs oldest
     if ($request->input('date_order') === 'oldest') {
-        $query->orderBy('tanggal_upload', 'asc')->orderBy('id', 'asc');
+        $query->orderBy('tanggal_upload', 'asc')->orderBy('uuid', 'asc');
     } else {
-        $query->orderBy('tanggal_upload', 'desc')->orderBy('id', 'desc');
+        $query->orderBy('tanggal_upload', 'desc')->orderBy('uuid', 'desc');
     }
 
     // Server-side Per-Page Whitelist
@@ -183,7 +183,7 @@ Route::get('/gallery/suggestions', function(Request $request) {
     // 2. Query konten by judul, deskripsi (konten), and divisi
     $query = Konten::with('divisi');
     if (Auth::user()->role === 'admin') {
-        $query->where('id_divisi', Auth::user()->id_divisi);
+        $query->where('divisi_uuid', Auth::user()->divisi_uuid);
     }
 
     $remaining = max(0, 8 - $suggestions->count());
@@ -202,7 +202,7 @@ Route::get('/gallery/suggestions', function(Request $request) {
             }
         })
         ->limit($remaining)
-        ->get(['id', 'uuid', 'judul', 'deskripsi', 'id_divisi', 'divisi_uuid']);
+        ->get(['uuid', 'judul', 'deskripsi', 'divisi_uuid']);
 
         foreach ($items as $item) {
             $divName = $item->divisi ? $item->divisi->nama_divisi : 'Umum';
@@ -247,7 +247,7 @@ Route::get('/sponsor/suggestions', function(Request $request) {
             }
         })
         ->limit(8)
-        ->get(['id', 'nama'])
+        ->get(['uuid', 'nama'])
         ->map(function ($item) {
             return [
                 'label' => $item->nama,
@@ -288,7 +288,7 @@ Route::get('/manage/user/suggestions', function(Request $request) {
             }
         })
         ->limit(8)
-        ->get(['id', 'uuid', 'name', 'email', 'role', 'id_divisi', 'divisi_uuid'])
+        ->get(['uuid', 'name', 'email', 'role', 'divisi_uuid'])
         ->map(function ($item) {
             $divName = $item->divisi ? $item->divisi->nama_divisi : 'Tanpa Divisi';
             return [
@@ -320,7 +320,7 @@ Route::get('/manage/event/suggestions', function(Request $request) {
             }
         })
         ->limit(8)
-        ->get(['id', 'event_name', 'event_date'])
+        ->get(['uuid', 'event_name', 'event_date'])
         ->map(function ($item) {
             $dateFormatted = $item->event_date ? \Carbon\Carbon::parse($item->event_date)->translatedFormat('d F Y') : '';
             return [
@@ -352,11 +352,11 @@ Route::get('/sponsor', function(Request $request){
     }
 
     if ($request->input('date_order') === 'oldest') {
-        $query->orderBy('id', 'asc');
+        $query->orderBy('nama', 'desc');
     } elseif ($request->input('date_order') === 'name_asc') {
         $query->orderBy('nama', 'asc');
     } else {
-        $query->orderBy('id', 'desc');
+        $query->orderBy('nama', 'asc');
     }
 
     $sponsorPage = $request->input('sponsor-page', 1);
@@ -408,7 +408,7 @@ Route::get('/manage/user', function(Request $request){
         $query->where('role', $request->role);
     }
 
-    $query->orderBy('id', 'desc');
+    $query->orderBy('created_at', 'desc')->orderBy('uuid', 'desc');
 
     $akunPage = $request->input('account-page', 1);
     $allowedPerPage = [2, 5, 10, 20, 50];
@@ -475,8 +475,8 @@ Route::get('/dashboard', function(Request $request) {
     }
 })->name('adm.dashboard');
 
-// Dual identifier pattern matching either numeric INT or canonical UUID v4
-$dualIdPattern = '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+// Pure UUID v4 pattern
+$dualIdPattern = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
 
 // ==========================================
 // 4. MANAGE ACCOUNT (USER / SUBADMIN) ROUTES
@@ -615,12 +615,12 @@ Route::get('/calendar/edit/{id}', function($id) {
     if (!Auth::check()) return redirect('/login');
     $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.editcalendar', compact('calendar'));
-})->name('calendar.edit')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->name('calendar.edit')->where('id', $dualIdPattern);
 Route::get('/manage/event/{id}/edit', function($id) {
     if (!Auth::check()) return redirect('/login');
     $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.editcalendar', compact('calendar'));
-})->name('event.edit')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->name('event.edit')->where('id', $dualIdPattern);
 
 Route::put('/calendar/{id}', function(Request $request, $id) {
     if (!Auth::check()) return redirect('/login');
@@ -640,7 +640,7 @@ Route::put('/calendar/{id}', function(Request $request, $id) {
     ]);
 
     return redirect('/manage/event')->with('success', 'Data acara berhasil diperbarui.');
-})->name('calendar.update')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->name('calendar.update')->where('id', $dualIdPattern);
 Route::put('/manage/event/{id}', function(Request $request, $id) {
     if (!Auth::check()) return redirect('/login');
     $request->validate([
@@ -659,7 +659,7 @@ Route::put('/manage/event/{id}', function(Request $request, $id) {
     ]);
 
     return redirect('/manage/event')->with('success', 'Data acara berhasil diperbarui.');
-})->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->where('id', $dualIdPattern);
 
 Route::delete('/calendar/{id}', function($id) {
     if (!Auth::check()) return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
@@ -674,7 +674,7 @@ Route::delete('/calendar/{id}', function($id) {
     } else {
         return response()->json(['status' => 'error', 'message' => 'Kalender tidak ditemukan!'], 404);
     }
-})->name('calendar.delete')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->name('calendar.delete')->where('id', $dualIdPattern);
 Route::delete('/manage/event/{id}', function($id) {
     if (!Auth::check()) return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
     $calendar = Calendar::whereIdentifier($id)->first();
@@ -688,16 +688,16 @@ Route::delete('/manage/event/{id}', function($id) {
     } else {
         return response()->json(['status' => 'error', 'message' => 'Kalender tidak ditemukan!'], 404);
     }
-})->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->where('id', $dualIdPattern);
 
 Route::get('/manage/event/{id}', function($id) {
     if (!Auth::check()) return redirect('/login');
     $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.show', compact('calendar'));
-})->name('calendar.show')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->name('calendar.show')->where('id', $dualIdPattern);
 Route::get('/calendar/{id}', function($id) {
     if (!Auth::check()) return redirect('/login');
     $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.show', compact('calendar'));
-})->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
+})->where('id', $dualIdPattern);
 

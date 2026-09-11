@@ -14,11 +14,13 @@ class DatabaseSeeder extends Seeder
             DivisiSeeder::class
         ]);
 
+        $ictDivisi = \App\Models\Divisi::where('nama_divisi', 'ICT')->first();
+
         User::factory()->create([
             'name' => 'Guruh Wijanarko, S.T',
             'role' => 'superadmin',
             'username' => 'smktelekomunikasitelesandi',
-            'id_divisi' => 6,
+            'divisi_uuid' => $ictDivisi?->uuid,
             'alamat' => 'Mekarsari Raya Jl. KH. Mochammad - Mekarsari Tambun Selatan, Bekasi 17510',
             'password' => Hash::make('smdevcreative@smktelesandi'),
             'email' => 'smktelesandi@gmail.com'

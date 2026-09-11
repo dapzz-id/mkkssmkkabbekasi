@@ -34,7 +34,7 @@ class SitemapController extends Controller
         }
 
         // Add all active Konten articles with canonical slug URLs
-        $articles = Konten::whereNotNull('slug')->where('slug', '!=', '')->orderBy('id', 'desc')->get();
+        $articles = Konten::whereNotNull('slug')->where('slug', '!=', '')->orderBy('tanggal_upload', 'desc')->get();
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
         $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";

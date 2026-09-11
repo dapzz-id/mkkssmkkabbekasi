@@ -16,7 +16,7 @@ trait HasDualIdentifier
     protected static function bootHasDualIdentifier(): void
     {
         static::creating(function ($model) {
-            // 1. Auto-generate UUID if not already assigned
+            // 1. Auto-generate canonical UUID v4 if not already assigned
             if (empty($model->uuid)) {
                 $model->uuid = (string) Str::uuid();
             }
@@ -24,79 +24,13 @@ trait HasDualIdentifier
             if ($model->getKeyName() === 'uuid') {
                 $model->{$model->getKeyName()} = $model->uuid;
             }
-
-            // 2. Synchronize FKs for dual-write safety
-            static::syncTransitionalForeignKeys($model);
-        });
-
-        static::created(function ($model) {
-            // Automatically populate legacy auto-increment id into in-memory model attribute
-            if (empty($model->id) && !empty($model->uuid)) {
-                $legacyId = $model->newQuery()->where('uuid', $model->uuid)->value('id');
-                if ($legacyId) {
-                    $model->setAttribute('id', (int) $legacyId);
-                    $model->syncOriginalAttribute('id');
-                }
-            }
-        });
-
-        static::updating(function ($model) {
-            static::syncTransitionalForeignKeys($model);
         });
     }
 
     /**
-     * Synchronize transitional UUID foreign keys and integer foreign keys bi-directionally.
-     */
-    protected static function syncTransitionalForeignKeys($model): void
-    {
-        // For User model: sync id_divisi <-> divisi_uuid
-        if ($model instanceof \App\Models\User) {
-            if ($model->isDirty('divisi_uuid') && !empty($model->divisi_uuid)) {
-                $divisiId = \App\Models\Divisi::where('uuid', $model->divisi_uuid)->value('id');
-                if ($divisiId) {
-                    $model->id_divisi = $divisiId;
-                }
-            } elseif (isset($model->id_divisi) && ($model->isDirty('id_divisi') || empty($model->divisi_uuid))) {
-                $divisiUuid = \App\Models\Divisi::where('id', $model->id_divisi)->value('uuid');
-                if ($divisiUuid) {
-                    $model->divisi_uuid = $divisiUuid;
-                }
-            }
-        }
-
-        // For Konten model: sync id_user <-> user_uuid and id_divisi <-> divisi_uuid
-        if ($model instanceof \App\Models\Konten) {
-            // User FK
-            if ($model->isDirty('user_uuid') && !empty($model->user_uuid)) {
-                $userId = \App\Models\User::where('uuid', $model->user_uuid)->value('id');
-                if ($userId) {
-                    $model->id_user = $userId;
-                }
-            } elseif (isset($model->id_user) && ($model->isDirty('id_user') || empty($model->user_uuid))) {
-                $userUuid = \App\Models\User::where('id', $model->id_user)->value('uuid');
-                if ($userUuid) {
-                    $model->user_uuid = $userUuid;
-                }
-            }
-
-            // Divisi FK
-            if ($model->isDirty('divisi_uuid') && !empty($model->divisi_uuid)) {
-                $divisiId = \App\Models\Divisi::where('uuid', $model->divisi_uuid)->value('id');
-                if ($divisiId) {
-                    $model->id_divisi = $divisiId;
-                }
-            } elseif (isset($model->id_divisi) && ($model->isDirty('id_divisi') || empty($model->divisi_uuid))) {
-                $divisiUuid = \App\Models\Divisi::where('id', $model->id_divisi)->value('uuid');
-                if ($divisiUuid) {
-                    $model->divisi_uuid = $divisiUuid;
-                }
-            }
-        }
-    }
-
-    /**
-     * Scope query to find record by either integer ID or canonical UUID string.
+     * Scope query to find record by canonical UUID string.
+     * Preserves backwards compatibility for consumers while safely preventing
+     * unknown column errors if a legacy integer is passed.
      *
      * @param Builder $query
      * @param mixed $identifier
@@ -108,20 +42,20 @@ trait HasDualIdentifier
 
         // Canonical UUID v4 pattern
         if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $idString)) {
-            return $query->where('uuid', $idString);
+            return $query->where($this->getTable() . '.uuid', $idString);
         }
 
-        // Strict numeric ID pattern
+        // If a legacy numeric identifier is passed after id column is dropped,
+        // match nothing safely without throwing SQL column not found error.
         if (ctype_digit($idString)) {
-            return $query->where('id', (int) $idString);
+            return $query->whereRaw('1 = 0');
         }
 
-        // Fallback for safety
-        return $query->where('id', $identifier)->orWhere('uuid', $identifier);
+        return $query->where($this->getTable() . '.uuid', $idString);
     }
 
     /**
-     * Find a model by either its integer primary key or its canonical UUID string.
+     * Find a model by its canonical UUID string.
      *
      * @param mixed $identifier
      * @param array $columns
@@ -133,7 +67,7 @@ trait HasDualIdentifier
     }
 
     /**
-     * Find a model by either its integer primary key or its canonical UUID string or throw 404.
+     * Find a model by its canonical UUID string or throw 404.
      *
      * @param mixed $identifier
      * @param array $columns
@@ -147,7 +81,7 @@ trait HasDualIdentifier
     }
 
     /**
-     * Retrieve the model for a bound value with dual-identifier support.
+     * Retrieve the model for a bound value with UUID support.
      */
     public function resolveRouteBinding($value, $field = null)
     {
@@ -160,7 +94,7 @@ trait HasDualIdentifier
 
     /**
      * Get the query to use for model restoration when deserializing queued jobs/notifications.
-     * Supports both canonical UUIDs and legacy numeric IDs.
+     * Uses canonical UUID primary key.
      */
     public function newQueryForRestoration($ids)
     {
@@ -169,15 +103,15 @@ trait HasDualIdentifier
         }
 
         $idString = (string) $ids;
-        if (ctype_digit($idString)) {
-            return $this->newQueryWithoutScopes()->where('id', (int) $idString);
+        if (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', $idString)) {
+            return $this->newQueryWithoutScopes()->where($this->getKeyName(), $idString);
         }
 
         return $this->newQueryWithoutScopes()->where($this->getKeyName(), $ids);
     }
 
     /**
-     * Create a new Eloquent query builder for the model with dual-identifier whereKey support.
+     * Create a new Eloquent query builder for the model with UUID primary key whereKey support.
      *
      * @param  \Illuminate\Database\Query\Builder  $query
      * @return \Illuminate\Database\Eloquent\Builder
@@ -193,18 +127,10 @@ trait HasDualIdentifier
 
                 if (is_array($id) || $id instanceof \Illuminate\Contracts\Support\Arrayable) {
                     $array = is_array($id) ? $id : $id->toArray();
-                    if (!empty($array) && ctype_digit((string) reset($array))) {
-                        return $this->whereIn($this->model->getTable() . '.id', $array);
-                    }
-                    return parent::whereKey($id);
+                    return $this->whereIn($this->model->getTable() . '.' . $this->model->getKeyName(), $array);
                 }
 
-                $idString = (string) $id;
-                if (ctype_digit($idString)) {
-                    return $this->where($this->model->getTable() . '.id', '=', (int) $idString);
-                }
-
-                return parent::whereKey($id);
+                return $this->where($this->model->getTable() . '.' . $this->model->getKeyName(), '=', (string) $id);
             }
         };
     }

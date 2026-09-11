@@ -16,7 +16,7 @@
                         <div class="card-body">
                             <h5 class="card-title">{{ $item->nama_divisi }}</h5>
                             <p class="card-text">{{ $firstKonten->judul }}</p>
-                            <a href="{{ route('konten.show', $firstKonten->slug ?? $firstKonten->id) }}" class="btn btn-outline-primary btn-selengkapnya">Selengkapnya</a>
+                            <a href="{{ route('konten.show', $firstKonten->slug ?: $firstKonten->uuid) }}" class="btn btn-outline-primary btn-selengkapnya">Selengkapnya</a>
                         </div>
                     @else
                         <div class="card-body">

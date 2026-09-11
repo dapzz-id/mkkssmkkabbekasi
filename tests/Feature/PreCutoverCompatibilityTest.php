@@ -92,7 +92,7 @@ class PreCutoverCompatibilityTest extends TestCase
             'email' => 'sessiontest_' . $uniqueSuffix . '@example.com',
             'password' => Hash::make('secretpassword123'),
             'role' => 'superadmin',
-            'id_divisi' => $divisi->id,
+            'divisi_uuid' => $divisi->uuid,
             'alamat' => 'Alamat Test',
         ]);
 
@@ -130,7 +130,7 @@ class PreCutoverCompatibilityTest extends TestCase
     }
 
     /**
-     * Test bi-directional synchronization in HasDualIdentifier.
+     * Test pure UUID relationship resolution in HasDualIdentifier.
      */
     public function test_bidirectional_transitional_fk_sync_in_has_dual_identifier(): void
     {
@@ -138,7 +138,7 @@ class PreCutoverCompatibilityTest extends TestCase
         $divisi = Divisi::create(['nama_divisi' => 'Sync Test ' . $uniqueSuffix]);
         $this->assertNotEmpty($divisi->uuid);
 
-        // 1. Create User specifying divisi_uuid directly instead of id_divisi
+        // 1. Create User specifying divisi_uuid directly
         $user = new User([
             'name' => 'Sync User Test',
             'username' => 'sync_' . $uniqueSuffix,
@@ -150,9 +150,8 @@ class PreCutoverCompatibilityTest extends TestCase
         ]);
         $user->save();
 
-        // id_divisi should be automatically synchronized to $divisi->id
-        $this->assertEquals($divisi->id, $user->id_divisi);
         $this->assertEquals($divisi->uuid, $user->divisi_uuid);
+        $this->assertEquals($divisi->uuid, $user->divisi->uuid);
 
         // 2. Create Konten specifying user_uuid and divisi_uuid directly
         $konten = new Konten([
@@ -166,13 +165,13 @@ class PreCutoverCompatibilityTest extends TestCase
         ]);
         $konten->save();
 
-        $this->assertEquals($user->id, $konten->id_user);
-        $this->assertEquals($divisi->id, $konten->id_divisi);
+        $this->assertEquals($user->uuid, $konten->user_uuid);
+        $this->assertEquals($divisi->uuid, $konten->divisi_uuid);
 
         // 3. Test explicit UUID relationship helpers
-        $this->assertEquals($divisi->id, $user->divisiByUuid->id);
-        $this->assertEquals($divisi->id, $konten->divisiByUuid->id);
-        $this->assertEquals($user->id, $konten->userByUuid->id);
+        $this->assertEquals($divisi->uuid, $user->divisiByUuid->uuid);
+        $this->assertEquals($divisi->uuid, $konten->divisiByUuid->uuid);
+        $this->assertEquals($user->uuid, $konten->userByUuid->uuid);
 
         // Clean up
         $konten->delete();
@@ -181,28 +180,16 @@ class PreCutoverCompatibilityTest extends TestCase
     }
 
     /**
-     * Test legacy id secondary indexes exist to satisfy MySQL AUTO_INCREMENT rule.
+     * Test absence of legacy id columns in Phase 8 architecture.
      */
     public function test_standalone_legacy_id_indexes_exist(): void
     {
-        $isMySql = DB::getDriverName() === 'mysql';
-        $tables = ['divisi', 'user', 'konten', 'sponsor', 'pimpinan'];
+        $tables = ['divisi', 'user', 'konten', 'sponsor', 'calendar', 'pimpinan'];
         foreach ($tables as $table) {
-            $indexName = "idx_{$table}_legacy_id";
-            if ($isMySql) {
-                $indexes = DB::select("SHOW INDEX FROM `{$table}` WHERE Key_name = ?", [$indexName]);
-            } else {
-                $indexes = DB::select("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = ? AND name = ?", [$table, $indexName]);
-            }
-            $this->assertNotEmpty($indexes, "Expected index {$indexName} to exist on table {$table}");
+            $this->assertFalse(
+                \Illuminate\Support\Facades\Schema::hasColumn($table, 'id'),
+                "Table {$table} must not have legacy 'id' column in Phase 8."
+            );
         }
-
-        // Calendar has calendar_id_unique covering id
-        if ($isMySql) {
-            $calIndexes = DB::select("SHOW INDEX FROM `calendar` WHERE Key_name = 'calendar_id_unique'");
-        } else {
-            $calIndexes = DB::select("SELECT name FROM sqlite_master WHERE type = 'index' AND tbl_name = 'calendar' AND name LIKE '%calendar_id_unique%'");
-        }
-        $this->assertNotEmpty($calIndexes, "Expected calendar_id_unique on calendar table");
     }
 }

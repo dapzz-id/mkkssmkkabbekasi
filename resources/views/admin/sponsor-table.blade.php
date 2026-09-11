@@ -32,7 +32,7 @@
                         <td class="py-3.5 px-4 text-center whitespace-nowrap">
                             <div class="inline-flex items-center gap-1.5">
                                 {{-- View Button (Green) --}}
-                                {{-- <a href="{{ url('/sponsor/' . $kontenSponsor['id']) }}"
+                                {{-- <a href="{{ url('/sponsor/' . $kontenSponsor['uuid']) }}"
                                    class="inline-flex items-center justify-center w-9 h-9 text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-emerald-400 focus:outline-none"
                                    aria-label="Lihat Sponsor {{ $kontenSponsor['nama'] }}"
                                    title="Lihat Sponsor">
@@ -44,7 +44,7 @@
                                 {{-- Edit Button (Blue) --}}
                                 <button type="button"
                                         class="btn-updateSponsor inline-flex items-center justify-center w-9 h-9 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                                        data-idSponsor="{{ $kontenSponsor['id'] }}"
+                                        data-idSponsor="{{ $kontenSponsor['uuid'] }}"
                                         aria-label="Edit Sponsor {{ $kontenSponsor['nama'] }}"
                                         title="Edit Sponsor">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -54,7 +54,7 @@
                                 {{-- Delete Button (Red) --}}
                                 <button type="button"
                                         class="btn-deleteSponsor inline-flex items-center justify-center w-9 h-9 text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-rose-400 focus:outline-none"
-                                        data-idSponsor="{{ $kontenSponsor['id'] }}"
+                                        data-idSponsor="{{ $kontenSponsor['uuid'] }}"
                                         data-namaSponsor="{{ $kontenSponsor['nama'] }}"
                                         aria-label="Hapus Sponsor {{ $kontenSponsor['nama'] }}"
                                         title="Hapus Sponsor">
@@ -91,7 +91,7 @@
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                    <a href="{{ url('/sponsor/' . $kontenSponsor['id']) }}"
+                    <a href="{{ url('/sponsor/' . $kontenSponsor['uuid']) }}"
                        class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
                        title="Lihat Sponsor"
                        aria-label="Lihat Sponsor {{ $kontenSponsor['nama'] }}">
@@ -102,7 +102,7 @@
                     </a>
                     <button type="button"
                             class="btn-updateSponsor w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                            data-idSponsor="{{ $kontenSponsor['id'] }}"
+                            data-idSponsor="{{ $kontenSponsor['uuid'] }}"
                             title="Edit Sponsor"
                             aria-label="Edit Sponsor {{ $kontenSponsor['nama'] }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -111,7 +111,7 @@
                     </button>
                     <button type="button"
                             class="btn-deleteSponsor w-9 h-9 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                            data-idSponsor="{{ $kontenSponsor['id'] }}"
+                            data-idSponsor="{{ $kontenSponsor['uuid'] }}"
                             data-namaSponsor="{{ $kontenSponsor['nama'] }}"
                             title="Hapus Sponsor"
                             aria-label="Hapus Sponsor {{ $kontenSponsor['nama'] }}">

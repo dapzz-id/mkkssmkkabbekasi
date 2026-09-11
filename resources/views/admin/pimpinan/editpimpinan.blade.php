@@ -66,7 +66,7 @@
                         Pimpinan MKKS
                     </h1>
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
-                        Edit data pimpinan #{{ $pimpinan->id }}
+                        Edit data pimpinan
                     </p>
                 </div>
             </div>
@@ -87,7 +87,7 @@
         <div class="pt-1.5">
             <x-admin-breadcrumb :items="[
                 ['label' => 'Pimpinan MKKS', 'url' => '/pimpinan'],
-                ['label' => $pimpinan->id . '_edit']
+                ['label' => 'Edit Pimpinan']
             ]" />
         </div>
     </div>
@@ -696,7 +696,7 @@
                 }
 
                 const xhr = new XMLHttpRequest();
-                xhr.open('POST', '{{ route("pimpinan.update", $pimpinan->id) }}', true);
+                xhr.open('POST', '{{ route("pimpinan.update", $pimpinan->uuid) }}', true);
                 xhr.setRequestHeader('Accept', 'application/json');
 
                 if (hasNewPhoto) {

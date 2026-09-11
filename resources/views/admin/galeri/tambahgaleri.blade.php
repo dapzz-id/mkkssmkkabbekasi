@@ -91,28 +91,28 @@
 
                 <!-- Divisi -->
                 <div>
-                    <label for="id_divisi" class="block text-sm font-semibold text-slate-800 mb-2">
+                    <label for="divisi_uuid" class="block text-sm font-semibold text-slate-800 mb-2">
                         Divisi Terkait <span class="text-rose-500">*</span>
                     </label>
                     @php
                         if (Auth::user()->role == 'superadmin') {
                             $divisiList = \App\Models\Divisi::all();
                         } else {
-                            $divisiList = \App\Models\Divisi::where('id', Auth::user()->id_divisi)->get();
+                            $divisiList = \App\Models\Divisi::where('uuid', Auth::user()->divisi_uuid)->get();
                         }
                     @endphp
                     <div class="relative">
-                        <select name="id_divisi" id="id_divisi" required
-                            class="w-full pl-4 pr-10 py-2.5 border @error('id_divisi') border-rose-400 @else border-slate-300 focus:ring-blue-500 focus:border-blue-500 @enderror rounded-xl text-sm font-medium text-slate-800 focus:ring-2 shadow-2xs appearance-none transition-all cursor-pointer {{ Auth::user()->role !== 'superadmin' ? 'bg-slate-100 pointer-events-none' : 'bg-white' }}"
+                        <select name="divisi_uuid" id="divisi_uuid" required
+                            class="w-full pl-4 pr-10 py-2.5 border @error('divisi_uuid') border-rose-400 @else border-slate-300 focus:ring-blue-500 focus:border-blue-500 @enderror rounded-xl text-sm font-medium text-slate-800 focus:ring-2 shadow-2xs appearance-none transition-all cursor-pointer {{ Auth::user()->role !== 'superadmin' ? 'bg-slate-100 pointer-events-none' : 'bg-white' }}"
                             {{ Auth::user()->role !== 'superadmin' ? 'tabindex="-1"' : '' }}>
                             
                             @if(Auth::user()->role == 'superadmin')
-                                <option value="" disabled {{ !old('id_divisi') && !Auth::user()->id_divisi ? 'selected' : '' }}>Pilih Divisi</option>
+                                <option value="" disabled {{ !old('divisi_uuid') && !Auth::user()->divisi_uuid ? 'selected' : '' }}>Pilih Divisi</option>
                             @endif
                             
                             @foreach ($divisiList as $item)
-                                <option value="{{ $item->id }}"
-                                    {{ old('id_divisi', Auth::user()->id_divisi) == $item->id ? 'selected' : '' }}>
+                                <option value="{{ $item->uuid }}"
+                                    {{ old('divisi_uuid', Auth::user()->divisi_uuid) == $item->uuid ? 'selected' : '' }}>
                                     {{ $item->nama_divisi }}
                                 </option>
                             @endforeach
@@ -123,7 +123,7 @@
                             </svg>
                         </div>
                     </div>
-                    @error('id_divisi')
+                    @error('divisi_uuid')
                         <p class="text-rose-500 text-xs mt-1.5 font-medium">{{ $message }}</p>
                     @enderror
                 </div>
@@ -501,7 +501,7 @@
 
                     const judulInput = document.getElementById('judul');
                     const deskripsiInput = document.getElementById('deskripsi');
-                    const divisiSelect = document.getElementById('id_divisi');
+                    const divisiSelect = document.getElementById('divisi_uuid');
 
                     if (!judulInput.value.trim()) {
                         judulInput.focus();

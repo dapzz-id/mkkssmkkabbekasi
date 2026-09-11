@@ -24,7 +24,7 @@ class PasswordResetTest extends TestCase
         $divisi = Divisi::create(['nama_divisi' => 'Teknologi Informasi']);
 
         $this->testUser = User::create([
-            'id_divisi' => $divisi->id,
+            'divisi_uuid' => $divisi->uuid,
             'name'      => 'Admin Test',
             'username'  => 'admintest',
             'email'     => 'admin@mkkssmkbekasi.or.id',

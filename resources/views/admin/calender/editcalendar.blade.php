@@ -17,7 +17,7 @@
                         Event Schedule
                     </h1>
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
-                        Edit agenda kegiatan #{{ $calendar->id }}
+                        Edit agenda kegiatan
                     </p>
                 </div>
             </div>
@@ -34,7 +34,7 @@
         <div class="pt-1.5">
             <x-admin-breadcrumb :items="[
                 ['label' => 'Event Schedule', 'url' => '/manage/event'],
-                ['label' => $calendar->id . '_edit']
+                ['label' => 'Edit Agenda']
             ]" />
         </div>
     </div>
@@ -42,11 +42,11 @@
     <!-- MAIN FORM CARD -->
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
         <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-            <h2 class="text-base font-bold text-slate-900">Form Edit Agenda #{{ $calendar->id }}</h2>
+            <h2 class="text-base font-bold text-slate-900">Form Edit Agenda</h2>
             <span class="text-xs text-slate-500 font-medium">* Wajib diisi</span>
         </div>
 
-        <form action="{{ route('calendar.update', $calendar->id) }}" id="formEditCalendar" method="POST" class="p-6 sm:p-8 space-y-6">
+        <form action="{{ route('calendar.update', $calendar->uuid) }}" id="formEditCalendar" method="POST" class="p-6 sm:p-8 space-y-6">
             @csrf
             @method('PUT')
 

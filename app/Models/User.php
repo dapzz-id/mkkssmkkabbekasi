@@ -21,7 +21,6 @@ class User extends Authenticatable implements CanResetPasswordContract
 
     protected $fillable = [
         'uuid',
-        'id_divisi',
         'divisi_uuid',
         'name',
         'username',
@@ -36,20 +35,12 @@ class User extends Authenticatable implements CanResetPasswordContract
         return $this->belongsTo(Divisi::class, 'divisi_uuid', 'uuid');
     }
 
-    public function divisiById() {
-        return $this->belongsTo(Divisi::class, 'id_divisi', 'id');
-    }
-
     public function divisiByUuid() {
         return $this->belongsTo(Divisi::class, 'divisi_uuid', 'uuid');
     }
 
     public function konten() {
         return $this->hasMany(Konten::class, 'user_uuid', 'uuid');
-    }
-
-    public function kontenById() {
-        return $this->hasMany(Konten::class, 'id_user', 'id');
     }
 
     public function kontenByUuid() {

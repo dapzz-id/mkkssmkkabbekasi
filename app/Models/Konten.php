@@ -13,15 +13,22 @@ class Konten extends Model
     protected $primaryKey = 'uuid';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'uuid',
+        'divisi_uuid',
+        'user_uuid',
+        'judul',
+        'deskripsi',
+        'url_media',
+        'tanggal_upload',
+        'seo_title',
+        'seo_description',
+        'slug',
+    ];
     public $timestamps = false;
 
     public function user() {
         return $this->belongsTo(User::class, 'user_uuid', 'uuid');
-    }
-
-    public function userById() {
-        return $this->belongsTo(User::class, 'id_user', 'id');
     }
 
     public function userByUuid() {
@@ -30,10 +37,6 @@ class Konten extends Model
 
     public function divisi() {
         return $this->belongsTo(Divisi::class, 'divisi_uuid', 'uuid');
-    }
-
-    public function divisiById() {
-        return $this->belongsTo(Divisi::class, 'id_divisi', 'id');
     }
 
     public function divisiByUuid() {

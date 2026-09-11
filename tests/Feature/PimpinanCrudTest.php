@@ -27,7 +27,7 @@ class PimpinanCrudTest extends TestCase
         $divisi = Divisi::create(['nama_divisi' => 'Teknologi']);
 
         $this->superAdmin = User::create([
-            'id_divisi' => $divisi->id,
+            'divisi_uuid' => $divisi->uuid,
             'name' => 'Super Administrator',
             'username' => 'superadmin',
             'email' => 'superadmin@mkkssmkbekasi.or.id',
@@ -37,7 +37,7 @@ class PimpinanCrudTest extends TestCase
         ]);
 
         $this->regularAdmin = User::create([
-            'id_divisi' => $divisi->id,
+            'divisi_uuid' => $divisi->uuid,
             'name' => 'Regular Admin',
             'username' => 'adminbiasa',
             'email' => 'adminbiasa@mkkssmkbekasi.or.id',
@@ -215,7 +215,7 @@ class PimpinanCrudTest extends TestCase
 
         $newFile = UploadedFile::fake()->image('new.jpg');
 
-        $response = $this->put("/pimpinan/{$pimpinan->id}", [
+        $response = $this->put("/pimpinan/{$pimpinan->uuid}", [
             'nama' => 'Nama Baru Diperbarui',
             'jabatan' => 'Jabatan Baru',
             'foto' => $newFile,
@@ -249,7 +249,7 @@ class PimpinanCrudTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->patch("/pimpinan/{$pimpinan->id}/toggle-status");
+        $response = $this->patch("/pimpinan/{$pimpinan->uuid}/toggle-status");
 
         $response->assertStatus(200);
         $response->assertJson([
@@ -275,12 +275,12 @@ class PimpinanCrudTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->delete("/pimpinan/{$pimpinan->id}");
+        $response = $this->delete("/pimpinan/{$pimpinan->uuid}");
 
         $response->assertStatus(200);
         $response->assertJson(['status' => 'success']);
 
-        $this->assertDatabaseMissing('pimpinan', ['id' => $pimpinan->id]);
+        $this->assertDatabaseMissing('pimpinan', ['uuid' => $pimpinan->uuid]);
         Storage::disk('public')->assertMissing($path);
     }
 
@@ -322,7 +322,7 @@ class PimpinanCrudTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->putJson("/pimpinan/{$pimpinan->id}", [
+        $response = $this->putJson("/pimpinan/{$pimpinan->uuid}", [
             'nama' => 'Nama Sesudah Ajax',
             'jabatan' => 'Jabatan Sesudah Ajax',
             'urutan' => 1,

@@ -124,7 +124,7 @@
                                 class="w-full pl-4 pr-10 py-2.5 bg-white border @error('divisi') border-rose-400 @else border-slate-300 focus:ring-blue-500 focus:border-blue-500 @enderror rounded-xl text-sm font-medium text-slate-800 focus:ring-2 shadow-2xs appearance-none transition-all cursor-pointer">
                             <option value="" disabled {{ old('divisi') ? '' : 'selected' }}>Pilih Divisi</option>
                             @foreach($divisi as $item)
-                                <option value="{{ $item->id }}" {{ old('divisi') == $item->id ? 'selected' : '' }}>
+                                <option value="{{ $item->uuid }}" {{ old('divisi') == $item->uuid ? 'selected' : '' }}>
                                     {{ $item->nama_divisi }}
                                 </option>
                             @endforeach

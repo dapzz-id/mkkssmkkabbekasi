@@ -30,7 +30,7 @@ class UuidMigrationTest extends TestCase
         ]);
 
         $this->superAdmin = User::create([
-            'id_divisi' => $this->divisi->id,
+            'divisi_uuid' => $this->divisi->uuid,
             'name' => 'Super Administrator',
             'username' => 'superadmin_uuid_test',
             'email' => 'superadmin_uuid@mkkssmkbekasi.or.id',
@@ -52,7 +52,7 @@ class UuidMigrationTest extends TestCase
         $this->assertMatchesRegularExpression($uuidRegex, $divisi->uuid);
 
         $user = User::create([
-            'id_divisi' => $divisi->id,
+            'divisi_uuid' => $divisi->uuid,
             'name' => 'Test User',
             'username' => 'testuser_uuid',
             'email' => 'testuser_uuid@mkks.id',
@@ -88,8 +88,8 @@ class UuidMigrationTest extends TestCase
         $this->assertMatchesRegularExpression($uuidRegex, $calendar->uuid);
 
         $konten = Konten::create([
-            'id_user' => $user->id,
-            'id_divisi' => $divisi->id,
+            'user_uuid' => $user->uuid,
+            'divisi_uuid' => $divisi->uuid,
             'judul' => 'Kegiatan Pelatihan UUID',
             'deskripsi' => 'Deskripsi pelatihan sistem identitas',
             'url_media' => json_encode(['/storage/media/test.jpg']),
@@ -101,13 +101,13 @@ class UuidMigrationTest extends TestCase
     }
 
     /**
-     * Scenario 2: Creating User automatically populates transitional divisi_uuid from parent Divisi.
+     * Scenario 2: Creating User populates divisi_uuid and establishes relationship.
      */
     public function test_creating_user_automatically_populates_transitional_divisi_uuid(): void
     {
         $user = User::create([
-            'id_divisi' => $this->divisi->id,
-            'name' => 'Transitional FK User',
+            'divisi_uuid' => $this->divisi->uuid,
+            'name' => 'UUID FK User',
             'username' => 'transitional_user',
             'email' => 'transitional@mkks.id',
             'password' => Hash::make('secret123'),
@@ -120,13 +120,13 @@ class UuidMigrationTest extends TestCase
     }
 
     /**
-     * Scenario 3: Creating Konten automatically populates both user_uuid and divisi_uuid.
+     * Scenario 3: Creating Konten populates both user_uuid and divisi_uuid.
      */
     public function test_creating_konten_automatically_populates_transitional_fks(): void
     {
         $konten = Konten::create([
-            'id_user' => $this->superAdmin->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->superAdmin->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'judul' => 'Konten Transitional FK Test',
             'deskripsi' => 'Deskripsi konten dengan transitional foreign keys',
             'url_media' => json_encode(['/storage/media/sample.jpg']),
@@ -141,26 +141,26 @@ class UuidMigrationTest extends TestCase
     }
 
     /**
-     * Scenario 4: Updating parent foreign key synchronizes transitional UUID.
+     * Scenario 4: Updating parent foreign key updates divisi_uuid.
      */
     public function test_updating_parent_id_synchronizes_transitional_uuid(): void
     {
         $divisiBaru = Divisi::create(['nama_divisi' => 'Kurikulum']);
 
-        $this->superAdmin->id_divisi = $divisiBaru->id;
+        $this->superAdmin->divisi_uuid = $divisiBaru->uuid;
         $this->superAdmin->save();
 
         $this->assertEquals($divisiBaru->uuid, $this->superAdmin->fresh()->divisi_uuid);
     }
 
     /**
-     * Scenario 5: scopeWhereIdentifier resolves records by integer primary key.
+     * Scenario 5: scopeWhereIdentifier resolves records by canonical UUID string.
      */
     public function test_where_identifier_finds_record_by_integer_id(): void
     {
-        $found = Divisi::whereIdentifier($this->divisi->id)->first();
+        $found = Divisi::whereIdentifier($this->divisi->uuid)->first();
         $this->assertNotNull($found);
-        $this->assertEquals($this->divisi->id, $found->id);
+        $this->assertEquals($this->divisi->uuid, $found->uuid);
     }
 
     /**
@@ -171,11 +171,10 @@ class UuidMigrationTest extends TestCase
         $found = Divisi::whereIdentifier($this->divisi->uuid)->first();
         $this->assertNotNull($found);
         $this->assertEquals($this->divisi->uuid, $found->uuid);
-        $this->assertEquals($this->divisi->id, $found->id);
     }
 
     /**
-     * Scenario 7: findByIdentifierOrFail throws 404 ModelNotFoundException for nonexistent IDs or UUIDs.
+     * Scenario 7: findByIdentifierOrFail throws 404 ModelNotFoundException for nonexistent UUIDs.
      */
     public function test_find_by_identifier_or_fail_throws_exception_on_nonexistent(): void
     {
@@ -220,8 +219,8 @@ class UuidMigrationTest extends TestCase
     public function test_admin_gallery_show_resolves_id_and_uuid_with_301_redirect(): void
     {
         $konten = Konten::create([
-            'id_user' => $this->superAdmin->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->superAdmin->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'judul' => 'Galeri Redirect Test',
             'deskripsi' => 'Deskripsi untuk pengujian redirect URL',
             'url_media' => json_encode(['/storage/media/img1.jpg']),
@@ -230,11 +229,6 @@ class UuidMigrationTest extends TestCase
         ]);
 
         $this->actingAs($this->superAdmin);
-
-        // Numeric ID request -> 301 redirect to slug
-        $responseId = $this->get('/gallery/' . $konten->id);
-        $responseId->assertStatus(301);
-        $responseId->assertRedirect('/gallery/' . $konten->slug);
 
         // Canonical UUID request -> 301 redirect to slug
         $responseUuid = $this->get('/gallery/' . $konten->uuid);
@@ -248,24 +242,19 @@ class UuidMigrationTest extends TestCase
     }
 
     /**
-     * Scenario 12: Public /konten/{slug} resolves numeric ID and canonical UUID with 301 redirect to slug.
+     * Scenario 12: Public /konten/{slug} resolves canonical UUID with 301 redirect to slug.
      */
     public function test_public_konten_show_resolves_id_and_uuid_with_301_redirect(): void
     {
         $konten = Konten::create([
-            'id_user' => $this->superAdmin->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->superAdmin->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'judul' => 'Konten Publik Redirect Test',
             'deskripsi' => 'Deskripsi pengujian public redirect',
             'url_media' => json_encode(['/storage/media/pub1.jpg']),
             'slug' => 'konten-publik-redirect-test',
             'tanggal_upload' => '2026-09-10',
         ]);
-
-        // Numeric ID -> 301 redirect
-        $responseId = $this->get('/konten/' . $konten->id);
-        $responseId->assertStatus(301);
-        $responseId->assertRedirect(route('konten.show', ['slug' => $konten->slug]));
 
         // Canonical UUID -> 301 redirect
         $responseUuid = $this->get('/konten/' . $konten->uuid);
@@ -279,7 +268,7 @@ class UuidMigrationTest extends TestCase
     }
 
     /**
-     * Scenario 13: Admin Sponsor CRUD routes support both numeric ID and canonical UUID.
+     * Scenario 13: Admin Sponsor CRUD routes support canonical UUID.
      */
     public function test_admin_sponsor_crud_supports_both_id_and_uuid(): void
     {
@@ -289,9 +278,6 @@ class UuidMigrationTest extends TestCase
         ]);
 
         $this->actingAs($this->superAdmin);
-
-        // Edit via numeric ID
-        $this->get('/sponsor/edit/' . $sponsor->id)->assertStatus(200)->assertSee('Sponsor Dual Test');
 
         // Edit via canonical UUID
         $this->get('/sponsor/edit/' . $sponsor->uuid)->assertStatus(200)->assertSee('Sponsor Dual Test');
@@ -310,7 +296,7 @@ class UuidMigrationTest extends TestCase
     }
 
     /**
-     * Scenario 14: Admin Pimpinan CRUD routes support both numeric ID and canonical UUID.
+     * Scenario 14: Admin Pimpinan CRUD routes support canonical UUID.
      */
     public function test_admin_pimpinan_crud_supports_both_id_and_uuid(): void
     {
@@ -323,9 +309,6 @@ class UuidMigrationTest extends TestCase
         ]);
 
         $this->actingAs($this->superAdmin);
-
-        // Show via ID
-        $this->get('/pimpinan/' . $pimpinan->id)->assertStatus(200)->assertSee('Drs. Pimpinan Uuid Test');
 
         // Show via UUID
         $this->get('/pimpinan/' . $pimpinan->uuid)->assertStatus(200)->assertSee('Drs. Pimpinan Uuid Test');
@@ -342,7 +325,7 @@ class UuidMigrationTest extends TestCase
     }
 
     /**
-     * Scenario 15: Admin Calendar CRUD routes support both numeric ID and canonical UUID.
+     * Scenario 15: Admin Calendar CRUD routes support canonical UUID.
      */
     public function test_admin_calendar_crud_supports_both_id_and_uuid(): void
     {
@@ -352,9 +335,6 @@ class UuidMigrationTest extends TestCase
         ]);
 
         $this->actingAs($this->superAdmin);
-
-        // Edit via ID
-        $this->get('/calendar/edit/' . $calendar->id)->assertStatus(200)->assertSee('Agenda Dual Test');
 
         // Edit via UUID
         $this->get('/calendar/edit/' . $calendar->uuid)->assertStatus(200)->assertSee('Agenda Dual Test');

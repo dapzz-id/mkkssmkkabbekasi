@@ -16,7 +16,7 @@
                         Pimpinan MKKS
                     </h1>
                     <p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
-                        Detail data pimpinan #{{ $pimpinan->id }}
+                        Detail data pimpinan
                     </p>
                 </div>
             </div>
@@ -32,7 +32,7 @@
                 </a>
 
                 @if(Auth::user()->role === 'superadmin')
-                    <a href="{{ url('/pimpinan/edit/' . $pimpinan->id) }}"
+                    <a href="{{ url('/pimpinan/edit/' . $pimpinan->uuid) }}"
                        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm transition-all shadow-xs min-h-[44px]">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -47,7 +47,7 @@
         <div class="pt-1.5">
             <x-admin-breadcrumb :items="[
                 ['label' => 'Pimpinan MKKS', 'url' => '/pimpinan'],
-                ['label' => $pimpinan->id . '_view']
+                ['label' => 'Detail Pimpinan']
             ]" />
         </div>
     </div>
@@ -96,8 +96,8 @@
                         <span class="font-bold text-slate-800 text-base">Nomor Urut: {{ $pimpinan->urutan }}</span>
                     </div>
                     <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-100">
-                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">ID Sistem</span>
-                        <span class="font-bold text-slate-800 text-base">#{{ $pimpinan->id }}</span>
+                        <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">UUID</span>
+                        <span class="font-mono text-xs text-slate-700 break-all select-all">{{ $pimpinan->uuid }}</span>
                     </div>
                 </div>
             </div>

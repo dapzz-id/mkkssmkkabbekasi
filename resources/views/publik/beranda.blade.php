@@ -243,7 +243,7 @@
                                                 Str::limit($konten->deskripsi, 197, '...'),
                                                 '<b><i><u><br><mark><sub><sup><ul><ol><li><q><ruby><rt><rp>',
                                             ) !!}</p>
-                                            <a href="{{ route('konten.show', $konten->slug ?? $konten->id) }}"
+                                            <a href="{{ route('konten.show', $konten->slug ?: $konten->uuid) }}"
                                                 class="btn btn-outline-primary">Baca Selengkapnya</a>
                                         </div>
                                     </div>
@@ -283,7 +283,7 @@
                                         Str::limit($konten->deskripsi, 97, '...'),
                                         '<b><i><u><mark><sub><sup><ul><ol><li><q><ruby><rt><rp>',
                                     ) !!}</p>
-                                    <a href="{{ route('konten.show', $konten->slug ?? $konten->id) }}"
+                                    <a href="{{ route('konten.show', $konten->slug ?: $konten->uuid) }}"
                                         class="btn btn-outline-primary btn-sm">Baca Selengkapnya</a>
                                 </div>
                             </div>

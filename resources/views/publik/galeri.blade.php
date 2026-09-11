@@ -81,8 +81,8 @@
                                                 '<b><i><u><br><mark><sub><sup><ul><ol><li><q><ruby><rt><rp>') !!}
                                         </p>
 
-                                        <a href="{{ route('konten.show', $item->slug ?? $item->id) }}"
-                                           class="btn btn-primary mt-auto">
+                                         <a href="{{ route('konten.show', $item->slug ?: $item->uuid) }}"
+                                            class="btn btn-primary mt-auto">
                                             Baca Selengkapnya
                                         </a>
                                     </div>
@@ -134,7 +134,7 @@
                             </div>
 
                             <div class="card-footer bg-white border-0">
-                                <a href="{{ route('konten.show', $item->slug ?? $item->id) }}"
+                                <a href="{{ route('konten.show', $item->slug ?: $item->uuid) }}"
                                    class="btn btn-outline-primary w-100">
                                     Baca Selengkapnya
                                 </a>

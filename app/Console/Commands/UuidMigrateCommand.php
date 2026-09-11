@@ -207,16 +207,21 @@ class UuidMigrateCommand extends Command
                 $hasFkUuid = Schema::hasColumn('user', 'divisi_uuid');
 
                 if ($hasFkUuid) {
-                    $withFk = DB::table('user')
-                        ->whereNotNull('id_divisi')
-                        ->whereNotNull('divisi_uuid')
-                        ->count();
+                    if (Schema::hasColumn('user', 'id_divisi')) {
+                        $withFk = DB::table('user')
+                            ->whereNotNull('id_divisi')
+                            ->whereNotNull('divisi_uuid')
+                            ->count();
 
-                    $totalWithFk = DB::table('user')
-                        ->whereNotNull('id_divisi')
-                        ->count();
+                        $totalWithFk = DB::table('user')
+                            ->whereNotNull('id_divisi')
+                            ->count();
 
-                    $fkStatus = "divisi_uuid: {$withFk}/{$totalWithFk}";
+                        $fkStatus = "divisi_uuid: {$withFk}/{$totalWithFk}";
+                    } else {
+                        $withFk = DB::table('user')->whereNotNull('divisi_uuid')->count();
+                        $fkStatus = "divisi_uuid: {$withFk}/{$totalCount}";
+                    }
                 } else {
                     $fkStatus = 'Column Missing';
                 }
@@ -225,25 +230,31 @@ class UuidMigrateCommand extends Command
                 $hasDivisiFk = Schema::hasColumn('konten', 'divisi_uuid');
 
                 if ($hasUserFk && $hasDivisiFk) {
-                    $uFk = DB::table('konten')
-                        ->whereNotNull('id_user')
-                        ->whereNotNull('user_uuid')
-                        ->count();
+                    if (Schema::hasColumn('konten', 'id_user') && Schema::hasColumn('konten', 'id_divisi')) {
+                        $uFk = DB::table('konten')
+                            ->whereNotNull('id_user')
+                            ->whereNotNull('user_uuid')
+                            ->count();
 
-                    $uTot = DB::table('konten')
-                        ->whereNotNull('id_user')
-                        ->count();
+                        $uTot = DB::table('konten')
+                            ->whereNotNull('id_user')
+                            ->count();
 
-                    $dFk = DB::table('konten')
-                        ->whereNotNull('id_divisi')
-                        ->whereNotNull('divisi_uuid')
-                        ->count();
+                        $dFk = DB::table('konten')
+                            ->whereNotNull('id_divisi')
+                            ->whereNotNull('divisi_uuid')
+                            ->count();
 
-                    $dTot = DB::table('konten')
-                        ->whereNotNull('id_divisi')
-                        ->count();
+                        $dTot = DB::table('konten')
+                            ->whereNotNull('id_divisi')
+                            ->count();
 
-                    $fkStatus = "user: {$uFk}/{$uTot}, divisi: {$dFk}/{$dTot}";
+                        $fkStatus = "user: {$uFk}/{$uTot}, divisi: {$dFk}/{$dTot}";
+                    } else {
+                        $uFk = DB::table('konten')->whereNotNull('user_uuid')->count();
+                        $dFk = DB::table('konten')->whereNotNull('divisi_uuid')->count();
+                        $fkStatus = "user: {$uFk}/{$totalCount}, divisi: {$dFk}/{$totalCount}";
+                    }
                 } else {
                     $fkStatus = 'Columns Missing';
                 }
@@ -334,77 +345,122 @@ class UuidMigrateCommand extends Command
             'Auditing existing Foreign Key relationships for orphans...'
         );
 
-        // 1. user.id_divisi -> divisi.id
-        $orphanUsers = DB::table('user')
-            ->leftJoin(
-                'divisi',
-                'user.id_divisi',
-                '=',
-                'divisi.id'
-            )
-            ->whereNotNull('user.id_divisi')
-            ->whereNull('divisi.id')
-            ->count();
+        // 1. user foreign key check
+        if (Schema::hasColumn('user', 'divisi_uuid') && Schema::hasColumn('divisi', 'uuid')) {
+            $orphanUsers = DB::table('user')
+                ->leftJoin(
+                    'divisi',
+                    'user.divisi_uuid',
+                    '=',
+                    'divisi.uuid'
+                )
+                ->whereNotNull('user.divisi_uuid')
+                ->whereNull('divisi.uuid')
+                ->count();
+            $fkLabel1 = 'user.divisi_uuid -> divisi.uuid';
+        } else {
+            $orphanUsers = DB::table('user')
+                ->leftJoin(
+                    'divisi',
+                    'user.id_divisi',
+                    '=',
+                    'divisi.id'
+                )
+                ->whereNotNull('user.id_divisi')
+                ->whereNull('divisi.id')
+                ->count();
+            $fkLabel1 = 'user.id_divisi -> divisi.id';
+        }
 
         if ($orphanUsers > 0) {
             $this->components->error(
-                "CRITICAL: Found {$orphanUsers} orphan user records with invalid id_divisi!"
+                "CRITICAL: Found {$orphanUsers} orphan user records with invalid {$fkLabel1}!"
             );
 
             $orphanFound = true;
         } else {
             $this->components->twoColumnDetail(
-                'user.id_divisi -> divisi.id',
+                $fkLabel1,
                 '<fg=green>Clean (0 orphans)</>'
             );
         }
 
-        // 2. konten.id_user -> user.id
-        $orphanKontenUser = DB::table('konten')
-            ->leftJoin(
-                'user',
-                'konten.id_user',
-                '=',
-                'user.id'
-            )
-            ->whereNotNull('konten.id_user')
-            ->whereNull('user.id')
-            ->count();
+        // 2. konten.user foreign key check
+        if (Schema::hasColumn('konten', 'user_uuid') && Schema::hasColumn('user', 'uuid')) {
+            $orphanKontenUser = DB::table('konten')
+                ->leftJoin(
+                    'user',
+                    'konten.user_uuid',
+                    '=',
+                    'user.uuid'
+                )
+                ->whereNotNull('konten.user_uuid')
+                ->whereNull('user.uuid')
+                ->count();
+            $fkLabel2 = 'konten.user_uuid -> user.uuid';
+        } else {
+            $orphanKontenUser = DB::table('konten')
+                ->leftJoin(
+                    'user',
+                    'konten.id_user',
+                    '=',
+                    'user.id'
+                )
+                ->whereNotNull('konten.id_user')
+                ->whereNull('user.id')
+                ->count();
+            $fkLabel2 = 'konten.id_user -> user.id';
+        }
 
         if ($orphanKontenUser > 0) {
             $this->components->error(
-                "CRITICAL: Found {$orphanKontenUser} orphan konten records with invalid id_user!"
+                "CRITICAL: Found {$orphanKontenUser} orphan konten records with invalid {$fkLabel2}!"
             );
 
             $orphanFound = true;
         } else {
             $this->components->twoColumnDetail(
-                'konten.id_user -> user.id',
+                $fkLabel2,
                 '<fg=green>Clean (0 orphans)</>'
             );
         }
 
-        // 3. konten.id_divisi -> divisi.id
-        $orphanKontenDivisi = DB::table('konten')
-            ->leftJoin(
-                'divisi',
-                'konten.id_divisi',
-                '=',
-                'divisi.id'
-            )
-            ->whereNotNull('konten.id_divisi')
-            ->whereNull('divisi.id')
-            ->count();
+        // 3. konten.divisi foreign key check
+        if (Schema::hasColumn('konten', 'divisi_uuid') && Schema::hasColumn('divisi', 'uuid')) {
+            $orphanKontenDivisi = DB::table('konten')
+                ->leftJoin(
+                    'divisi',
+                    'konten.divisi_uuid',
+                    '=',
+                    'divisi.uuid'
+                )
+                ->whereNotNull('konten.divisi_uuid')
+                ->whereNull('divisi.uuid')
+                ->count();
+            $fkLabel3 = 'konten.divisi_uuid -> divisi.uuid';
+        } else {
+            $orphanKontenDivisi = DB::table('konten')
+                ->leftJoin(
+                    'divisi',
+                    'konten.id_divisi',
+                    '=',
+                    'divisi.id'
+                )
+                ->whereNotNull('konten.id_divisi')
+                ->whereNull('divisi.id')
+                ->count();
+            $fkLabel3 = 'konten.id_divisi -> divisi.id';
+        }
 
         if ($orphanKontenDivisi > 0) {
             $this->components->error(
-                "CRITICAL: Found {$orphanKontenDivisi} orphan konten records with invalid id_divisi!"
+                "CRITICAL: Found {$orphanKontenDivisi} orphan konten records with invalid {$fkLabel3}!"
             );
 
             $orphanFound = true;
         } else {
             $this->components->twoColumnDetail(
-                'konten.id_divisi -> divisi.id',
+                $fkLabel3,
                 '<fg=green>Clean (0 orphans)</>'
             );
         }
@@ -497,21 +553,22 @@ class UuidMigrateCommand extends Command
                     "  Backfilling UUIDs for {$table} ({$unassignedCount} records)... "
                 );
 
+                $pkCol = Schema::hasColumn($table, 'id') ? 'id' : 'uuid';
                 $cursor = DB::table($table)
                     ->where(function ($query) {
                         $query
                             ->whereNull('uuid')
                             ->orWhere('uuid', '');
                     })
-                    ->select('id')
-                    ->orderBy('id');
+                    ->select($pkCol)
+                    ->orderBy($pkCol);
 
                 $cursor->chunk(
                     $chunkSize,
-                    function ($records) use ($table) {
+                    function ($records) use ($table, $pkCol) {
                         foreach ($records as $record) {
                             DB::table($table)
-                                ->where('id', $record->id)
+                                ->where($pkCol, $record->$pkCol)
                                 ->where(function ($q) {
                                     $q
                                         ->whereNull('uuid')
@@ -542,57 +599,64 @@ class UuidMigrateCommand extends Command
                 $table === 'user'
                 && Schema::hasColumn('user', 'divisi_uuid')
             ) {
-                $unassignedFk = DB::table('user')
-                    ->whereNotNull('id_divisi')
-                    ->where(function ($q) {
-                        $q
-                            ->whereNull('divisi_uuid')
-                            ->orWhere('divisi_uuid', '');
-                    })
-                    ->count();
-
-                if ($unassignedFk > 0) {
-                    $this->output->write(
-                        "  Mapping user.divisi_uuid from divisi.uuid ({$unassignedFk} records)... "
-                    );
-
-                    $cursor = DB::table('user')
+                if (Schema::hasColumn('user', 'id_divisi') && Schema::hasColumn('divisi', 'id')) {
+                    $unassignedFk = DB::table('user')
                         ->whereNotNull('id_divisi')
                         ->where(function ($q) {
                             $q
                                 ->whereNull('divisi_uuid')
                                 ->orWhere('divisi_uuid', '');
                         })
-                        ->select('id', 'id_divisi')
-                        ->orderBy('id');
+                        ->count();
 
-                    $cursor->chunk(
-                        $chunkSize,
-                        function ($users) {
-                            foreach ($users as $user) {
-                                $divisiUuid = DB::table('divisi')
-                                    ->where('id', $user->id_divisi)
-                                    ->value('uuid');
+                    if ($unassignedFk > 0) {
+                        $this->output->write(
+                            "  Mapping user.divisi_uuid from divisi.uuid ({$unassignedFk} records)... "
+                        );
 
-                                if ($divisiUuid) {
-                                    DB::table('user')
-                                        ->where('id', $user->id)
-                                        ->where(function ($q) {
-                                            $q
-                                                ->whereNull('divisi_uuid')
-                                                ->orWhere('divisi_uuid', '');
-                                        })
-                                        ->update([
-                                            'divisi_uuid' => $divisiUuid,
-                                        ]);
+                        $cursor = DB::table('user')
+                            ->whereNotNull('id_divisi')
+                            ->where(function ($q) {
+                                $q
+                                    ->whereNull('divisi_uuid')
+                                    ->orWhere('divisi_uuid', '');
+                            })
+                            ->select('id', 'id_divisi')
+                            ->orderBy('id');
+
+                        $cursor->chunk(
+                            $chunkSize,
+                            function ($users) {
+                                foreach ($users as $user) {
+                                    $divisiUuid = DB::table('divisi')
+                                        ->where('id', $user->id_divisi)
+                                        ->value('uuid');
+
+                                    if ($divisiUuid) {
+                                        DB::table('user')
+                                            ->where('id', $user->id)
+                                            ->where(function ($q) {
+                                                $q
+                                                    ->whereNull('divisi_uuid')
+                                                    ->orWhere('divisi_uuid', '');
+                                            })
+                                            ->update([
+                                                'divisi_uuid' => $divisiUuid,
+                                            ]);
+                                    }
                                 }
                             }
-                        }
-                    );
+                        );
 
-                    $this->output->writeln(
-                        '<fg=green>Done</>'
-                    );
+                        $this->output->writeln(
+                            '<fg=green>Done</>'
+                        );
+                    } else {
+                        $this->components->twoColumnDetail(
+                            'user.divisi_uuid mapping',
+                            '<fg=green>Already 100% mapped</>'
+                        );
+                    }
                 } else {
                     $this->components->twoColumnDetail(
                         'user.divisi_uuid mapping',
@@ -612,57 +676,64 @@ class UuidMigrateCommand extends Command
                 // --------------------------------------------------------
 
                 if (Schema::hasColumn('konten', 'user_uuid')) {
-                    $unassignedUserFk = DB::table('konten')
-                        ->whereNotNull('id_user')
-                        ->where(function ($q) {
-                            $q
-                                ->whereNull('user_uuid')
-                                ->orWhere('user_uuid', '');
-                        })
-                        ->count();
-
-                    if ($unassignedUserFk > 0) {
-                        $this->output->write(
-                            "  Mapping konten.user_uuid from user.uuid ({$unassignedUserFk} records)... "
-                        );
-
-                        $cursor = DB::table('konten')
+                    if (Schema::hasColumn('konten', 'id_user') && Schema::hasColumn('user', 'id')) {
+                        $unassignedUserFk = DB::table('konten')
                             ->whereNotNull('id_user')
                             ->where(function ($q) {
                                 $q
                                     ->whereNull('user_uuid')
                                     ->orWhere('user_uuid', '');
                             })
-                            ->select('id', 'id_user')
-                            ->orderBy('id');
+                            ->count();
 
-                        $cursor->chunk(
-                            $chunkSize,
-                            function ($items) {
-                                foreach ($items as $item) {
-                                    $userUuid = DB::table('user')
-                                        ->where('id', $item->id_user)
-                                        ->value('uuid');
+                        if ($unassignedUserFk > 0) {
+                            $this->output->write(
+                                "  Mapping konten.user_uuid from user.uuid ({$unassignedUserFk} records)... "
+                            );
 
-                                    if ($userUuid) {
-                                        DB::table('konten')
-                                            ->where('id', $item->id)
-                                            ->where(function ($q) {
-                                                $q
-                                                    ->whereNull('user_uuid')
-                                                    ->orWhere('user_uuid', '');
-                                            })
-                                            ->update([
-                                                'user_uuid' => $userUuid,
-                                            ]);
+                            $cursor = DB::table('konten')
+                                ->whereNotNull('id_user')
+                                ->where(function ($q) {
+                                    $q
+                                        ->whereNull('user_uuid')
+                                        ->orWhere('user_uuid', '');
+                                })
+                                ->select('id', 'id_user')
+                                ->orderBy('id');
+
+                            $cursor->chunk(
+                                $chunkSize,
+                                function ($items) {
+                                    foreach ($items as $item) {
+                                        $userUuid = DB::table('user')
+                                            ->where('id', $item->id_user)
+                                            ->value('uuid');
+
+                                        if ($userUuid) {
+                                            DB::table('konten')
+                                                ->where('id', $item->id)
+                                                ->where(function ($q) {
+                                                    $q
+                                                        ->whereNull('user_uuid')
+                                                        ->orWhere('user_uuid', '');
+                                                })
+                                                ->update([
+                                                    'user_uuid' => $userUuid,
+                                                ]);
+                                        }
                                     }
                                 }
-                            }
-                        );
+                            );
 
-                        $this->output->writeln(
-                            '<fg=green>Done</>'
-                        );
+                            $this->output->writeln(
+                                '<fg=green>Done</>'
+                            );
+                        } else {
+                            $this->components->twoColumnDetail(
+                                'konten.user_uuid mapping',
+                                '<fg=green>Already 100% mapped</>'
+                            );
+                        }
                     } else {
                         $this->components->twoColumnDetail(
                             'konten.user_uuid mapping',
@@ -676,57 +747,64 @@ class UuidMigrateCommand extends Command
                 // --------------------------------------------------------
 
                 if (Schema::hasColumn('konten', 'divisi_uuid')) {
-                    $unassignedDivisiFk = DB::table('konten')
-                        ->whereNotNull('id_divisi')
-                        ->where(function ($q) {
-                            $q
-                                ->whereNull('divisi_uuid')
-                                ->orWhere('divisi_uuid', '');
-                        })
-                        ->count();
-
-                    if ($unassignedDivisiFk > 0) {
-                        $this->output->write(
-                            "  Mapping konten.divisi_uuid from divisi.uuid ({$unassignedDivisiFk} records)... "
-                        );
-
-                        $cursor = DB::table('konten')
+                    if (Schema::hasColumn('konten', 'id_divisi') && Schema::hasColumn('divisi', 'id')) {
+                        $unassignedDivisiFk = DB::table('konten')
                             ->whereNotNull('id_divisi')
                             ->where(function ($q) {
                                 $q
                                     ->whereNull('divisi_uuid')
                                     ->orWhere('divisi_uuid', '');
                             })
-                            ->select('id', 'id_divisi')
-                            ->orderBy('id');
+                            ->count();
 
-                        $cursor->chunk(
-                            $chunkSize,
-                            function ($items) {
-                                foreach ($items as $item) {
-                                    $divisiUuid = DB::table('divisi')
-                                        ->where('id', $item->id_divisi)
-                                        ->value('uuid');
+                        if ($unassignedDivisiFk > 0) {
+                            $this->output->write(
+                                "  Mapping konten.divisi_uuid from divisi.uuid ({$unassignedDivisiFk} records)... "
+                            );
 
-                                    if ($divisiUuid) {
-                                        DB::table('konten')
-                                            ->where('id', $item->id)
-                                            ->where(function ($q) {
-                                                $q
-                                                    ->whereNull('divisi_uuid')
-                                                    ->orWhere('divisi_uuid', '');
-                                            })
-                                            ->update([
-                                                'divisi_uuid' => $divisiUuid,
-                                            ]);
+                            $cursor = DB::table('konten')
+                                ->whereNotNull('id_divisi')
+                                ->where(function ($q) {
+                                    $q
+                                        ->whereNull('divisi_uuid')
+                                        ->orWhere('divisi_uuid', '');
+                                })
+                                ->select('id', 'id_divisi')
+                                ->orderBy('id');
+
+                            $cursor->chunk(
+                                $chunkSize,
+                                function ($items) {
+                                    foreach ($items as $item) {
+                                        $divisiUuid = DB::table('divisi')
+                                            ->where('id', $item->id_divisi)
+                                            ->value('uuid');
+
+                                        if ($divisiUuid) {
+                                            DB::table('konten')
+                                                ->where('id', $item->id)
+                                                ->where(function ($q) {
+                                                    $q
+                                                        ->whereNull('divisi_uuid')
+                                                        ->orWhere('divisi_uuid', '');
+                                                })
+                                                ->update([
+                                                    'divisi_uuid' => $divisiUuid,
+                                                ]);
+                                        }
                                     }
                                 }
-                            }
-                        );
+                            );
 
-                        $this->output->writeln(
-                            '<fg=green>Done</>'
-                        );
+                            $this->output->writeln(
+                                '<fg=green>Done</>'
+                            );
+                        } else {
+                            $this->components->twoColumnDetail(
+                                'konten.divisi_uuid mapping',
+                                '<fg=green>Already 100% mapped</>'
+                            );
+                        }
                     } else {
                         $this->components->twoColumnDetail(
                             'konten.divisi_uuid mapping',
@@ -755,7 +833,8 @@ class UuidMigrateCommand extends Command
 
         $hasFailures = false;
 
-        $uuidRegex = '/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/';
+        // Canonical UUID v4 regex validation
+        $uuidRegex = '/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/';
 
         foreach ($this->tableOrder as $table) {
             $totalCount = DB::table($table)->count();
@@ -807,7 +886,7 @@ class UuidMigrateCommand extends Command
 
             // 3. Format validation
             $records = DB::table($table)
-                ->select('id', 'uuid')
+                ->select('uuid')
                 ->get();
 
             $invalidFormatCount = 0;
@@ -836,144 +915,210 @@ class UuidMigrateCommand extends Command
         }
 
         // ================================================================
-        // 4. FK Parity Checks
+        // 4. FK Integrity and Parity Checks
         // ================================================================
 
         $this->components->info(
-            'Verifying Transitional Foreign Key Parity...'
+            'Verifying Foreign Key Integrity and Parity...'
         );
 
         // ---------------------------------------------------------------
-        // user.divisi_uuid parity
+        // user.divisi_uuid integrity / parity
         // ---------------------------------------------------------------
 
         if (Schema::hasColumn('user', 'divisi_uuid')) {
-            $mismatchedUserFk = DB::table('user')
-                ->join(
-                    'divisi',
-                    'user.id_divisi',
-                    '=',
-                    'divisi.id'
-                )
-                ->whereColumn(
-                    'user.divisi_uuid',
-                    '!=',
-                    'divisi.uuid'
-                )
+            if (Schema::hasColumn('user', 'id_divisi') && Schema::hasColumn('divisi', 'id')) {
+                $mismatchedUserFk = DB::table('user')
+                    ->join(
+                        'divisi',
+                        'user.id_divisi',
+                        '=',
+                        'divisi.id'
+                    )
+                    ->whereColumn(
+                        'user.divisi_uuid',
+                        '!=',
+                        'divisi.uuid'
+                    )
+                    ->count();
+
+                $unmappedUserFk = DB::table('user')
+                    ->whereNotNull('id_divisi')
+                    ->where(function ($q) {
+                        $q
+                            ->whereNull('divisi_uuid')
+                            ->orWhere('divisi_uuid', '');
+                    })
+                    ->count();
+
+                if (
+                    $mismatchedUserFk > 0
+                    || $unmappedUserFk > 0
+                ) {
+                    $this->components->error(
+                        "FAIL: user.divisi_uuid has {$mismatchedUserFk} mismatches and {$unmappedUserFk} unmapped records."
+                    );
+
+                    $hasFailures = true;
+                } else {
+                    $this->components->twoColumnDetail(
+                        'user.divisi_uuid <-> divisi.uuid parity',
+                        '<fg=green>PASS (0 mismatches)</>'
+                    );
+                }
+            }
+
+            // Zero orphan check
+            $orphanUsers = DB::table('user')
+                ->whereNotNull('divisi_uuid')
+                ->where('divisi_uuid', '!=', '')
+                ->whereNotIn('divisi_uuid', DB::table('divisi')->pluck('uuid'))
                 ->count();
 
-            $unmappedUserFk = DB::table('user')
-                ->whereNotNull('id_divisi')
-                ->where(function ($q) {
-                    $q
-                        ->whereNull('divisi_uuid')
-                        ->orWhere('divisi_uuid', '');
-                })
-                ->count();
-
-            if (
-                $mismatchedUserFk > 0
-                || $unmappedUserFk > 0
-            ) {
+            if ($orphanUsers > 0) {
                 $this->components->error(
-                    "FAIL: user.divisi_uuid has {$mismatchedUserFk} mismatches and {$unmappedUserFk} unmapped records."
+                    "FAIL: user.divisi_uuid has {$orphanUsers} orphan foreign keys."
                 );
 
                 $hasFailures = true;
             } else {
                 $this->components->twoColumnDetail(
-                    'user.divisi_uuid <-> divisi.uuid parity',
-                    '<fg=green>PASS (0 mismatches)</>'
+                    'user.divisi_uuid zero orphan FKs',
+                    '<fg=green>PASS (0 orphans)</>'
                 );
             }
         }
 
         // ---------------------------------------------------------------
-        // konten.user_uuid parity
+        // konten.user_uuid integrity / parity
         // ---------------------------------------------------------------
 
         if (Schema::hasColumn('konten', 'user_uuid')) {
-            $mismatchedKontenUser = DB::table('konten')
-                ->join(
-                    'user',
-                    'konten.id_user',
-                    '=',
-                    'user.id'
-                )
-                ->whereColumn(
-                    'konten.user_uuid',
-                    '!=',
-                    'user.uuid'
-                )
+            if (Schema::hasColumn('konten', 'id_user') && Schema::hasColumn('user', 'id')) {
+                $mismatchedKontenUser = DB::table('konten')
+                    ->join(
+                        'user',
+                        'konten.id_user',
+                        '=',
+                        'user.id'
+                    )
+                    ->whereColumn(
+                        'konten.user_uuid',
+                        '!=',
+                        'user.uuid'
+                    )
+                    ->count();
+
+                $unmappedKontenUser = DB::table('konten')
+                    ->whereNotNull('id_user')
+                    ->where(function ($q) {
+                        $q
+                            ->whereNull('user_uuid')
+                            ->orWhere('user_uuid', '');
+                    })
+                    ->count();
+
+                if (
+                    $mismatchedKontenUser > 0
+                    || $unmappedKontenUser > 0
+                ) {
+                    $this->components->error(
+                        "FAIL: konten.user_uuid has {$mismatchedKontenUser} mismatches and {$unmappedKontenUser} unmapped records."
+                    );
+
+                    $hasFailures = true;
+                } else {
+                    $this->components->twoColumnDetail(
+                        'konten.user_uuid <-> user.uuid parity',
+                        '<fg=green>PASS (0 mismatches)</>'
+                    );
+                }
+            }
+
+            // Zero orphan check
+            $orphanKontenUser = DB::table('konten')
+                ->whereNotNull('user_uuid')
+                ->where('user_uuid', '!=', '')
+                ->whereNotIn('user_uuid', DB::table('user')->pluck('uuid'))
                 ->count();
 
-            $unmappedKontenUser = DB::table('konten')
-                ->whereNotNull('id_user')
-                ->where(function ($q) {
-                    $q
-                        ->whereNull('user_uuid')
-                        ->orWhere('user_uuid', '');
-                })
-                ->count();
-
-            if (
-                $mismatchedKontenUser > 0
-                || $unmappedKontenUser > 0
-            ) {
+            if ($orphanKontenUser > 0) {
                 $this->components->error(
-                    "FAIL: konten.user_uuid has {$mismatchedKontenUser} mismatches and {$unmappedKontenUser} unmapped records."
+                    "FAIL: konten.user_uuid has {$orphanKontenUser} orphan foreign keys."
                 );
 
                 $hasFailures = true;
             } else {
                 $this->components->twoColumnDetail(
-                    'konten.user_uuid <-> user.uuid parity',
-                    '<fg=green>PASS (0 mismatches)</>'
+                    'konten.user_uuid zero orphan FKs',
+                    '<fg=green>PASS (0 orphans)</>'
                 );
             }
         }
 
         // ---------------------------------------------------------------
-        // konten.divisi_uuid parity
+        // konten.divisi_uuid integrity / parity
         // ---------------------------------------------------------------
 
         if (Schema::hasColumn('konten', 'divisi_uuid')) {
-            $mismatchedKontenDivisi = DB::table('konten')
-                ->join(
-                    'divisi',
-                    'konten.id_divisi',
-                    '=',
-                    'divisi.id'
-                )
-                ->whereColumn(
-                    'konten.divisi_uuid',
-                    '!=',
-                    'divisi.uuid'
-                )
+            if (Schema::hasColumn('konten', 'id_divisi') && Schema::hasColumn('divisi', 'id')) {
+                $mismatchedKontenDivisi = DB::table('konten')
+                    ->join(
+                        'divisi',
+                        'konten.id_divisi',
+                        '=',
+                        'divisi.id'
+                    )
+                    ->whereColumn(
+                        'konten.divisi_uuid',
+                        '!=',
+                        'divisi.uuid'
+                    )
+                    ->count();
+
+                $unmappedKontenDivisi = DB::table('konten')
+                    ->whereNotNull('id_divisi')
+                    ->where(function ($q) {
+                        $q
+                            ->whereNull('divisi_uuid')
+                            ->orWhere('divisi_uuid', '');
+                    })
+                    ->count();
+
+                if (
+                    $mismatchedKontenDivisi > 0
+                    || $unmappedKontenDivisi > 0
+                ) {
+                    $this->components->error(
+                        "FAIL: konten.divisi_uuid has {$mismatchedKontenDivisi} mismatches and {$unmappedKontenDivisi} unmapped records."
+                    );
+
+                    $hasFailures = true;
+                } else {
+                    $this->components->twoColumnDetail(
+                        'konten.divisi_uuid <-> divisi.uuid parity',
+                        '<fg=green>PASS (0 mismatches)</>'
+                    );
+                }
+            }
+
+            // Zero orphan check
+            $orphanKontenDivisi = DB::table('konten')
+                ->whereNotNull('divisi_uuid')
+                ->where('divisi_uuid', '!=', '')
+                ->whereNotIn('divisi_uuid', DB::table('divisi')->pluck('uuid'))
                 ->count();
 
-            $unmappedKontenDivisi = DB::table('konten')
-                ->whereNotNull('id_divisi')
-                ->where(function ($q) {
-                    $q
-                        ->whereNull('divisi_uuid')
-                        ->orWhere('divisi_uuid', '');
-                })
-                ->count();
-
-            if (
-                $mismatchedKontenDivisi > 0
-                || $unmappedKontenDivisi > 0
-            ) {
+            if ($orphanKontenDivisi > 0) {
                 $this->components->error(
-                    "FAIL: konten.divisi_uuid has {$mismatchedKontenDivisi} mismatches and {$unmappedKontenDivisi} unmapped records."
+                    "FAIL: konten.divisi_uuid has {$orphanKontenDivisi} orphan foreign keys."
                 );
 
                 $hasFailures = true;
             } else {
                 $this->components->twoColumnDetail(
-                    'konten.divisi_uuid <-> divisi.uuid parity',
-                    '<fg=green>PASS (0 mismatches)</>'
+                    'konten.divisi_uuid zero orphan FKs',
+                    '<fg=green>PASS (0 orphans)</>'
                 );
             }
         }

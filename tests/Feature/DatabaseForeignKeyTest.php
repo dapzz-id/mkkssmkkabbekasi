@@ -25,7 +25,7 @@ class DatabaseForeignKeyTest extends TestCase
 
         $this->divisi = Divisi::create(['nama_divisi' => 'Teknologi Informasi']);
         $this->user = User::create([
-            'id_divisi' => $this->divisi->id,
+            'divisi_uuid' => $this->divisi->uuid,
             'name' => 'FK Test User',
             'username' => 'fk_test_user',
             'email' => 'fk_test_user@mkks.id',
@@ -36,13 +36,13 @@ class DatabaseForeignKeyTest extends TestCase
     }
 
     /**
-     * Test 1: Valid parent + child insert succeeds with synced INT and UUID foreign keys.
+     * Test 1: Valid parent + child insert succeeds with UUID foreign keys.
      */
     public function test_valid_parent_and_child_insert_succeeds(): void
     {
         $konten = Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'judul' => 'Valid FK Konten',
             'deskripsi' => 'Deskripsi konten dengan FK valid',
             'url_media' => json_encode(['/storage/media/valid.jpg']),
@@ -50,7 +50,7 @@ class DatabaseForeignKeyTest extends TestCase
             'tanggal_upload' => '2026-09-10 10:00:00',
         ]);
 
-        $this->assertNotNull($konten->id);
+        $this->assertNotNull($konten->uuid);
         $this->assertEquals($this->user->uuid, $konten->user_uuid);
         $this->assertEquals($this->divisi->uuid, $konten->divisi_uuid);
     }
@@ -71,7 +71,6 @@ class DatabaseForeignKeyTest extends TestCase
 
         DB::table('user')->insert([
             'uuid' => (string) Str::uuid(),
-            'id_divisi' => $this->divisi->id,
             'divisi_uuid' => $fakeUuid, // Non-existent parent UUID
             'name' => 'Invalid FK User',
             'username' => 'invalid_fk_user',
@@ -88,11 +87,10 @@ class DatabaseForeignKeyTest extends TestCase
     {
         $newDivisi = Divisi::create(['nama_divisi' => 'Humas']);
 
-        $this->user->id_divisi = $newDivisi->id;
+        $this->user->divisi_uuid = $newDivisi->uuid;
         $this->user->save();
 
         $this->assertEquals($newDivisi->uuid, $this->user->fresh()->divisi_uuid);
-        $this->assertEquals($newDivisi->id, $this->user->fresh()->id_divisi);
     }
 
     /**
@@ -107,7 +105,7 @@ class DatabaseForeignKeyTest extends TestCase
         $this->expectException(QueryException::class);
 
         DB::table('user')
-            ->where('id', $this->user->id)
+            ->where('uuid', $this->user->uuid)
             ->update(['divisi_uuid' => (string) Str::uuid()]);
     }
 
@@ -121,8 +119,8 @@ class DatabaseForeignKeyTest extends TestCase
         }
 
         $konten = Konten::create([
-            'id_user' => $this->user->id,
-            'id_divisi' => $this->divisi->id,
+            'user_uuid' => $this->user->uuid,
+            'divisi_uuid' => $this->divisi->uuid,
             'judul' => 'Cascade Test Konten',
             'deskripsi' => 'Konten untuk testing cascade',
             'url_media' => json_encode(['/storage/media/cascade.jpg']),
@@ -130,14 +128,14 @@ class DatabaseForeignKeyTest extends TestCase
             'tanggal_upload' => '2026-09-10 10:00:00',
         ]);
 
-        $userId = $this->user->id;
-        $kontenId = $konten->id;
+        $userUuid = $this->user->uuid;
+        $kontenUuid = $konten->uuid;
 
         // Delete parent Divisi
         $this->divisi->delete();
 
         // Verifying cascade occurred
-        $this->assertNull(User::find($userId));
-        $this->assertNull(Konten::find($kontenId));
+        $this->assertNull(User::find($userUuid));
+        $this->assertNull(Konten::find($kontenUuid));
     }
 }

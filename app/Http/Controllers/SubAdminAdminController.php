@@ -56,7 +56,6 @@ class SubAdminAdminController extends Controller
         ]);
 
         $divisi = Divisi::whereIdentifier($request->divisi)->first();
-        $idDivisi = $divisi ? $divisi->id : $request->divisi;
         $divisiUuid = $divisi ? $divisi->uuid : null;
 
         // Create the new Sub Admin
@@ -65,7 +64,6 @@ class SubAdminAdminController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
-            'id_divisi' => $idDivisi,
             'divisi_uuid' => $divisiUuid,
             'alamat' => $request->alamat,
             'password' => Hash::make($request->password), // Hash password before storing
@@ -94,14 +92,11 @@ class SubAdminAdminController extends Controller
         // Validate form data
         $subAdmin = User::findByIdentifierOrFail($id);
 
-        $isDivisiUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $request->input('divisi'));
-        $divisiRule = $isDivisiUuid ? 'required|exists:divisi,uuid' : 'required|exists:divisi,id';
-
         $request->validate([
             'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:user,username,' . $subAdmin->id, // Ignore current username
-            'email' => 'required|string|email|max:255|unique:user,email,' . $subAdmin->id, // Ignore current email
-            'divisi' => $divisiRule,
+            'username' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('user', 'username')->ignore($subAdmin->uuid, 'uuid')],
+            'email' => ['required', 'string', 'email', 'max:255', \Illuminate\Validation\Rule::unique('user', 'email')->ignore($subAdmin->uuid, 'uuid')],
+            'divisi' => 'required',
             'password' => 'nullable|string|min:8',
             'confirm_password' => 'nullable|string|same:password',
             'role' => 'required|string|in:admin,superadmin',
@@ -114,7 +109,6 @@ class SubAdminAdminController extends Controller
             'email.email' => 'Format email tidak valid',
             'email.unique' => 'Email sudah terdaftar',
             'divisi.required' => 'Pilih divisi',
-            'divisi.exists' => 'Divisi tidak valid',
             'role.required' => 'Pilih role',
             'password.min' => 'Password minimal 8 karakter',
             'alamat.required' => 'Masukkan alamat',
@@ -127,7 +121,6 @@ class SubAdminAdminController extends Controller
         $subAdmin->name = $request->name;
         $subAdmin->username = $request->username;
         $subAdmin->email = $request->email;
-        $subAdmin->id_divisi = $divisi ? $divisi->id : $request->divisi;
         $subAdmin->divisi_uuid = $divisi ? $divisi->uuid : null;
         $subAdmin->role = $request->role;
         $subAdmin->alamat = $request->alamat;

@@ -27,7 +27,7 @@ class LoginTurnstileTest extends TestCase
         ]);
 
         $this->testUser = User::create([
-            'id_divisi' => $divisi->id,
+            'divisi_uuid' => $divisi->uuid,
             'name' => 'Admin Test',
             'username' => 'admintest',
             'email' => 'admin@mkkssmkbekasi.or.id',

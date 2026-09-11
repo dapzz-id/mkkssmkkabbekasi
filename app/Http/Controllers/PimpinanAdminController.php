@@ -101,7 +101,7 @@ class PimpinanAdminController extends Controller
                 }
             })
             ->limit(8)
-            ->get(['id', 'nama', 'jabatan'])
+            ->get(['uuid', 'nama', 'jabatan'])
             ->map(function ($item) {
                 return [
                     'label' => $item->nama,

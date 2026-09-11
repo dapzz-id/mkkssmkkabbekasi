@@ -18,7 +18,7 @@
                             Sponsor
                         </h1>
                         <p class="text-xs sm:text-sm text-slate-500 mt-0.5 font-medium">
-                            Edit data mitra sponsor #{{ $sponsor->id }}
+                            Edit data mitra sponsor
                         </p>
                     </div>
                 </div>
@@ -34,18 +34,18 @@
             </div>
 
             <div class="pt-1.5">
-                <x-admin-breadcrumb :items="[['label' => 'Sponsor', 'url' => '/sponsor'], ['label' => $sponsor->id . '_edit']]" />
+                <x-admin-breadcrumb :items="[['label' => 'Sponsor', 'url' => '/sponsor'], ['label' => 'Edit Sponsor']]" />
             </div>
         </div>
 
         <!-- MAIN FORM CARD -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                <h2 class="text-base font-bold text-slate-900">Form Edit Sponsor #{{ $sponsor->id }}</h2>
+                <h2 class="text-base font-bold text-slate-900">Form Edit Sponsor</h2>
                 <span class="text-xs text-slate-500 font-medium">* Wajib diisi</span>
             </div>
 
-            <form action="{{ route('sponsor.update', $sponsor->id) }}" id="formEditSponsor" method="POST"
+            <form action="{{ route('sponsor.update', $sponsor->uuid) }}" id="formEditSponsor" method="POST"
                 enctype="multipart/form-data" class="p-6 sm:p-8 space-y-6">
                 @csrf
                 @method('PUT')

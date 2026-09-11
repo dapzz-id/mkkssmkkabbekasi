@@ -39,7 +39,7 @@
                         <td class="py-3.5 px-4 text-center">
                             <button type="button" 
                                     class="btn-toggleStatus px-3 py-1.5 text-xs font-bold rounded-full transition-colors cursor-pointer {{ $item->is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100' : 'bg-slate-100 text-slate-600 border border-slate-200 hover:bg-slate-200' }}" 
-                                    data-idPimpinan="{{ $item->id }}"
+                                    data-idPimpinan="{{ $item->uuid }}"
                                     title="Klik untuk ubah status aktif">
                                 {{ $item->is_active ? 'Aktif' : 'Nonaktif' }}
                             </button>
@@ -49,7 +49,7 @@
                                 {{-- Edit Button (Blue) --}}
                                 <button type="button" 
                                         class="btn-updatePimpinan inline-flex items-center justify-center w-9 h-9 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-blue-400 focus:outline-none" 
-                                        data-idPimpinan="{{ $item->id }}" 
+                                        data-idPimpinan="{{ $item->uuid }}" 
                                         aria-label="Edit Pimpinan {{ $item->nama }}"
                                         title="Edit Pimpinan">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -57,7 +57,7 @@
                                     </svg>
                                 </button>
                                 {{-- View Button (Green) --}}
-                                <a href="{{ url('/pimpinan/' . $item->id) }}"
+                                <a href="{{ url('/pimpinan/' . $item->uuid) }}"
                                    class="inline-flex items-center justify-center w-9 h-9 text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-emerald-400 focus:outline-none"
                                    aria-label="Lihat Pimpinan {{ $item->nama }}"
                                    title="Lihat Pimpinan">
@@ -69,7 +69,7 @@
                                 {{-- Delete Button (Red) --}}
                                 <button type="button" 
                                         class="btn-deletePimpinan inline-flex items-center justify-center w-9 h-9 text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-rose-400 focus:outline-none" 
-                                        data-idPimpinan="{{ $item->id }}" 
+                                        data-idPimpinan="{{ $item->uuid }}" 
                                         data-namaPimpinan="{{ $item->nama }}" 
                                         aria-label="Hapus Pimpinan {{ $item->nama }}"
                                         title="Hapus Pimpinan">
@@ -112,14 +112,14 @@
                             <span class="text-xs text-slate-500 font-medium">Urutan: <strong>{{ $item->urutan }}</strong></span>
                             <button type="button" 
                                     class="btn-toggleStatus px-2.5 py-0.5 text-xs font-bold rounded-full {{ $item->is_active ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-slate-100 text-slate-600 border border-slate-200' }}" 
-                                    data-idPimpinan="{{ $item->id }}">
+                                    data-idPimpinan="{{ $item->uuid }}">
                                 {{ $item->is_active ? 'Aktif' : 'Nonaktif' }}
                             </button>
                         </div>
                     </div>
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                    <a href="{{ url('/pimpinan/' . $item->id) }}"
+                    <a href="{{ url('/pimpinan/' . $item->uuid) }}"
                        class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
                        title="Lihat Pimpinan"
                        aria-label="Lihat Pimpinan {{ $item->nama }}">
@@ -130,7 +130,7 @@
                     </a>
                     <button type="button" 
                             class="btn-updatePimpinan w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer" 
-                            data-idPimpinan="{{ $item->id }}"
+                            data-idPimpinan="{{ $item->uuid }}"
                             title="Edit Pimpinan"
                             aria-label="Edit Pimpinan {{ $item->nama }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,7 +139,7 @@
                     </button>
                     <button type="button" 
                             class="btn-deletePimpinan w-9 h-9 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer" 
-                            data-idPimpinan="{{ $item->id }}" 
+                            data-idPimpinan="{{ $item->uuid }}" 
                             data-namaPimpinan="{{ $item->nama }}"
                             title="Hapus Pimpinan"
                             aria-label="Hapus Pimpinan {{ $item->nama }}">

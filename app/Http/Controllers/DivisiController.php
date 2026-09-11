@@ -20,7 +20,7 @@ class DivisiController extends Controller
         ]);
     }
     public function show($divisi) {
-        $divisiKonten = Divisi::where('id',$divisi)
+        $divisiKonten = Divisi::where('uuid', $divisi)
             ->orWhere('nama_divisi', $divisi)
             ->with(['konten' => function($query) {
                 $query->orderBy('tanggal_upload', 'desc');

@@ -56,7 +56,7 @@
                         <td class="py-3.5 px-4 text-center whitespace-nowrap">
                             <div class="inline-flex items-center gap-1.5">
                                 {{-- View Button (Green) --}}
-                                {{-- <a href="{{ url('/manage/user/' . $kontenAkun['id']) }}"
+                                {{-- <a href="{{ url('/manage/user/' . $kontenAkun['uuid']) }}"
                                    class="inline-flex items-center justify-center w-9 h-9 text-white bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-emerald-400 focus:outline-none"
                                    aria-label="Lihat Akun {{ $kontenAkun['name'] }}"
                                    title="Lihat Akun">
@@ -68,7 +68,7 @@
                                 {{-- Edit Button (Blue) --}}
                                 <button type="button"
                                         class="btn-updateAkun inline-flex items-center justify-center w-9 h-9 text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-blue-400 focus:outline-none"
-                                        data-idAkun="{{ $kontenAkun['id'] }}"
+                                        data-idAkun="{{ $kontenAkun['uuid'] }}"
                                         aria-label="Edit Akun {{ $kontenAkun['name'] }}"
                                         title="Edit Akun">
                                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -78,7 +78,7 @@
                                 {{-- Delete Button (Red) --}}
                                 <button type="button"
                                         class="btn-deleteAkun inline-flex items-center justify-center w-9 h-9 text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors shadow-2xs focus:ring-2 focus:ring-rose-400 focus:outline-none"
-                                        data-idAkun="{{ $kontenAkun['id'] }}"
+                                        data-idAkun="{{ $kontenAkun['uuid'] }}"
                                         data-namaAkun="{{ $kontenAkun['name'] }}"
                                         aria-label="Hapus Akun {{ $kontenAkun['name'] }}"
                                         title="Hapus Akun">
@@ -119,7 +119,7 @@
                     </span>
                 </div>
                 <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
-                    <a href="{{ url('/manage/user/' . $kontenAkun['id']) }}"
+                    <a href="{{ url('/manage/user/' . $kontenAkun['uuid']) }}"
                        class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
                        title="Lihat Akun"
                        aria-label="Lihat Akun {{ $kontenAkun['name'] }}">
@@ -130,7 +130,7 @@
                     </a>
                     <button type="button"
                             class="btn-updateAkun w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                            data-idAkun="{{ $kontenAkun['id'] }}"
+                            data-idAkun="{{ $kontenAkun['uuid'] }}"
                             title="Edit Akun"
                             aria-label="Edit Akun {{ $kontenAkun['name'] }}">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -139,7 +139,7 @@
                     </button>
                     <button type="button"
                             class="btn-deleteAkun w-9 h-9 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white inline-flex items-center justify-center shadow-2xs transition-colors cursor-pointer"
-                            data-idAkun="{{ $kontenAkun['id'] }}"
+                            data-idAkun="{{ $kontenAkun['uuid'] }}"
                             data-namaAkun="{{ $kontenAkun['name'] }}"
                             title="Hapus Akun"
                             aria-label="Hapus Akun {{ $kontenAkun['name'] }}">

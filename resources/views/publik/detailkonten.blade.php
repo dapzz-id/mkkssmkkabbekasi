@@ -83,8 +83,8 @@
             <div class="flex items-center gap-2 text-xs sm:text-sm text-slate-500 font-medium">
                 <a href="/" class="hover:text-blue-600 transition-colors">Beranda</a>
                 <span class="text-slate-300">/</span>
-                @if($konten->id_divisi)
-                    <a href="/divisi/{{ $konten->id_divisi }}" class="hover:text-blue-600 transition-colors">Divisi {{ $divisiName }}</a>
+                @if($konten->divisi_uuid)
+                    <a href="/divisi/{{ $konten->divisi_uuid }}" class="hover:text-blue-600 transition-colors">Divisi {{ $divisiName }}</a>
                     <span class="text-slate-300">/</span>
                 @endif
                 <span class="text-slate-900 font-semibold truncate max-w-[200px] sm:max-w-xs">{{ $konten->judul }}</span>
@@ -92,7 +92,7 @@
 
             <!-- Back Action Button -->
             <div class="flex items-center gap-2 shrink-0">
-                @if($konten->id_divisi)
+                @if($konten->divisi_uuid)
                     <a href="{{ route('beranda') }}"
                        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs sm:text-sm font-semibold transition-all shadow-2xs">
                         <svg class="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

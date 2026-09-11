@@ -84,7 +84,7 @@
                                                 '<b><i><u><mark><br><sub><sup><ul><ol><li><q><ruby><rt><rp>') !!}
                                         </p>
 
-                                        <a href="{{ route('konten.show', $konten->slug ?? $konten->id) }}"
+                                        <a href="{{ route('konten.show', $konten->slug ?: $konten->uuid) }}"
                                            class="btn btn-primary mt-auto">
                                             Selengkapnya
                                         </a>
@@ -136,7 +136,7 @@
                                         '<b><i><u><br><mark><sub><sup><ul><ol><li><q><ruby><rt><rp>') !!}
                                 </p>
 
-                                <a href="{{ route('konten.show', $konten->slug ?? $konten->id) }}"
+                                <a href="{{ route('konten.show', $konten->slug ?: $konten->uuid) }}"
                                    class="btn btn-outline-primary mt-auto">
                                    Selengkapnya
                                 </a>

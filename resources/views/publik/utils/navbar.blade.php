@@ -41,7 +41,7 @@
                     </a>
                     <ul class="dropdown-menu">
                         @foreach($divisi as $item)
-                        <li><a class="dropdown-item" href="/divisi/{{ $item->id }}">{{ $item->nama_divisi }}</a></li>
+                        <li><a class="dropdown-item" href="/divisi/{{ $item->uuid }}">{{ $item->nama_divisi }}</a></li>
                         @endforeach
                     </ul>
                 </li>
@@ -69,7 +69,7 @@
             </a>
             <ul class="dropdown-menu">
                 @foreach($divisi as $item)
-                <li><a class="dropdown-item" href="/divisi/{{ $item->id }}">{{ $item->nama_divisi }}</a></li>
+                <li><a class="dropdown-item" href="/divisi/{{ $item->uuid }}">{{ $item->nama_divisi }}</a></li>
                 @endforeach
             </ul>
         </li>
