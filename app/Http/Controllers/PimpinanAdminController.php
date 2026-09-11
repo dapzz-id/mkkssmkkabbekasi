@@ -194,7 +194,7 @@ class PimpinanAdminController extends Controller
     {
         $this->authorizeSuperAdmin();
 
-        $pimpinan = Pimpinan::findOrFail($id);
+        $pimpinan = Pimpinan::findByIdentifierOrFail($id);
 
         return view('admin.pimpinan.show', compact('pimpinan'));
     }
@@ -206,7 +206,7 @@ class PimpinanAdminController extends Controller
     {
         $this->authorizeSuperAdmin();
 
-        $pimpinan = Pimpinan::findOrFail($id);
+        $pimpinan = Pimpinan::findByIdentifierOrFail($id);
 
         return view('admin.pimpinan.editpimpinan', compact('pimpinan'));
     }
@@ -253,7 +253,7 @@ class PimpinanAdminController extends Controller
         // 2. Database ACID critical section with lockForUpdate()
         DB::beginTransaction();
         try {
-            $pimpinan = Pimpinan::where('id', $id)->lockForUpdate()->firstOrFail();
+            $pimpinan = Pimpinan::whereIdentifier($id)->lockForUpdate()->firstOrFail();
 
             if ($dataToUpdate['urutan'] === null) {
                 $dataToUpdate['urutan'] = $pimpinan->urutan;
@@ -308,7 +308,7 @@ class PimpinanAdminController extends Controller
 
         DB::beginTransaction();
         try {
-            $pimpinan = Pimpinan::where('id', $id)->lockForUpdate()->first();
+            $pimpinan = Pimpinan::whereIdentifier($id)->lockForUpdate()->first();
 
             if (!$pimpinan) {
                 DB::rollBack();
@@ -347,7 +347,7 @@ class PimpinanAdminController extends Controller
 
         DB::beginTransaction();
         try {
-            $pimpinan = Pimpinan::where('id', $id)->lockForUpdate()->firstOrFail();
+            $pimpinan = Pimpinan::whereIdentifier($id)->lockForUpdate()->firstOrFail();
             $pimpinan->is_active = !$pimpinan->is_active;
             $pimpinan->save();
             DB::commit();

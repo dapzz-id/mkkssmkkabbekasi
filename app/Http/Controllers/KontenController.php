@@ -9,8 +9,8 @@ use Illuminate\Http\Request;
 
 class KontenController extends Controller
 {
-    public function index($divisi, $id_divisi) {
-        $konten = Konten::where('id', $id_divisi)->get()[0];
+    public function index($divisi, $id_konten) {
+        $konten = Konten::whereIdentifier($id_konten)->firstOrFail();
 
         return view('publik.detailkonten', [
             'konten' => $konten,
@@ -24,7 +24,13 @@ class KontenController extends Controller
     {
         // 1. Legacy ID compatibility: If numeric, lookup by ID and 301 permanently redirect to canonical slug URL
         if (ctype_digit((string) $identifier)) {
-            $konten = Konten::with('divisi')->findOrFail($identifier);
+            $konten = Konten::with('divisi')->whereIdentifier($identifier)->firstOrFail();
+            if (!empty($konten->slug)) {
+                return redirect()->route('konten.show', ['slug' => $konten->slug], 301);
+            }
+        } elseif (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $identifier)) {
+            // UUID compatibility: lookup by UUID and 301 redirect to canonical slug URL
+            $konten = Konten::with('divisi')->where('uuid', $identifier)->firstOrFail();
             if (!empty($konten->slug)) {
                 return redirect()->route('konten.show', ['slug' => $konten->slug], 301);
             }

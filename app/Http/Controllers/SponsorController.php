@@ -67,13 +67,13 @@ class SponsorController extends Controller
 
     public function show($id)
     {
-        $sponsor = Sponsor::findOrFail($id);
+        $sponsor = Sponsor::findByIdentifierOrFail($id);
         return view('admin.sponsor.show', compact('sponsor'));
     }
 
     public function edit($id)
     {
-        $sponsor = Sponsor::findOrFail($id);
+        $sponsor = Sponsor::findByIdentifierOrFail($id);
         return view('admin.sponsor.editsponsor', [
             'sponsor' => $sponsor
         ]);
@@ -103,7 +103,7 @@ class SponsorController extends Controller
         // Database ACID critical section
         DB::beginTransaction();
         try {
-            $sponsor = Sponsor::where('id', $id)->lockForUpdate()->firstOrFail();
+            $sponsor = Sponsor::whereIdentifier($id)->lockForUpdate()->firstOrFail();
             $sponsor->nama = trim($validatedData['nama']);
 
             // Only update logo if a replacement was validated; otherwise preserve old logo
@@ -126,7 +126,7 @@ class SponsorController extends Controller
     {
         DB::beginTransaction();
         try {
-            $sponsor = Sponsor::where('id', $id)->lockForUpdate()->first();
+            $sponsor = Sponsor::whereIdentifier($id)->lockForUpdate()->first();
 
             if ($sponsor) {
                 $sponsor->delete();

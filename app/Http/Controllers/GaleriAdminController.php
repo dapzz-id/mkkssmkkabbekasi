@@ -44,8 +44,11 @@ class GaleriAdminController extends Controller
 
     public function store(Request $request)
     {
+        $isDivisiUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $request->input('id_divisi'));
+        $divisiRule = $isDivisiUuid ? 'required|exists:divisi,uuid' : 'required|exists:divisi,id';
+
         $validatedData = $request->validate([
-            'id_divisi' => 'required|exists:divisi,id',
+            'id_divisi' => $divisiRule,
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required',
             'media' => 'required|array|min:1',
@@ -66,6 +69,13 @@ class GaleriAdminController extends Controller
 
         if (Auth::user()->role == 'admin') {
             $validatedData['id_divisi'] = Auth::user()->id_divisi;
+            $validatedData['divisi_uuid'] = Auth::user()->divisi_uuid;
+        } else {
+            $divisi = Divisi::whereIdentifier($validatedData['id_divisi'])->first();
+            if ($divisi) {
+                $validatedData['id_divisi'] = $divisi->id;
+                $validatedData['divisi_uuid'] = $divisi->uuid;
+            }
         }
 
         // SEO Field Processing (Auto-fallback & Deterministic Collision Resolution)
@@ -105,6 +115,7 @@ class GaleriAdminController extends Controller
 
             $validatedData['url_media'] = json_encode($urls);
             $validatedData['id_user'] = Auth::user()->id;
+            $validatedData['user_uuid'] = Auth::user()->uuid;
             $validatedData['tanggal_upload'] = now();
 
             // 2. Database ACID Transaction
@@ -138,9 +149,19 @@ class GaleriAdminController extends Controller
 
     public function show($identifier)
     {
+        if (!Auth::check()) {
+            return redirect('/login');
+        }
+
         // 1. Legacy ID compatibility: If numeric ID is requested, redirect 301 to slug URL
         if (ctype_digit((string) $identifier)) {
-            $galeri = Konten::with(['divisi', 'user'])->findOrFail($identifier);
+            $galeri = Konten::with(['divisi', 'user'])->whereIdentifier($identifier)->firstOrFail();
+            if (!empty($galeri->slug)) {
+                return redirect('/gallery/' . $galeri->slug, 301);
+            }
+        } elseif (preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $identifier)) {
+            // UUID compatibility: If canonical UUID is requested, redirect 301 to slug URL
+            $galeri = Konten::with(['divisi', 'user'])->where('uuid', $identifier)->firstOrFail();
             if (!empty($galeri->slug)) {
                 return redirect('/gallery/' . $galeri->slug, 301);
             }
@@ -149,7 +170,11 @@ class GaleriAdminController extends Controller
             $galeri = Konten::with(['divisi', 'user'])->where('slug', $identifier)->firstOrFail();
         }
 
-        if (Auth::user()->role === 'admin' && $galeri->id_divisi != Auth::user()->id_divisi) {
+        $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
+            ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
+            : ($galeri->id_divisi != Auth::user()->id_divisi);
+
+        if (Auth::user()->role === 'admin' && $isMismatch) {
             abort(403, 'Akses ditolak. Anda hanya dapat melihat galeri divisi Anda.');
         }
 
@@ -158,9 +183,13 @@ class GaleriAdminController extends Controller
 
     public function edit($id)
     {
-        $galeri = Konten::findOrFail($id);
+        $galeri = Konten::findByIdentifierOrFail($id);
 
-        if (Auth::user()->role === 'admin' && $galeri->id_divisi != Auth::user()->id_divisi) {
+        $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
+            ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
+            : ($galeri->id_divisi != Auth::user()->id_divisi);
+
+        if (Auth::user()->role === 'admin' && $isMismatch) {
             abort(403, 'Akses ditolak. Anda hanya dapat mengelola galeri divisi Anda.');
         }
 
@@ -170,14 +199,21 @@ class GaleriAdminController extends Controller
 
     public function update(Request $request, $id)
     {
-        $galeri = Konten::findOrFail($id);
+        $galeri = Konten::findByIdentifierOrFail($id);
 
-        if (Auth::user()->role === 'admin' && $galeri->id_divisi != Auth::user()->id_divisi) {
+        $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
+            ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
+            : ($galeri->id_divisi != Auth::user()->id_divisi);
+
+        if (Auth::user()->role === 'admin' && $isMismatch) {
             abort(403, 'Akses ditolak. Anda hanya dapat mengelola galeri divisi Anda.');
         }
 
+        $isDivisiUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $request->input('id_divisi'));
+        $divisiRule = $isDivisiUuid ? 'required|exists:divisi,uuid' : 'required|exists:divisi,id';
+
         $validatedData = $request->validate([
-            'id_divisi' => 'required|exists:divisi,id',
+            'id_divisi' => $divisiRule,
             'judul' => 'required|string|max:255',
             'deskripsi' => 'required',
             'media' => 'sometimes|array',
@@ -198,12 +234,19 @@ class GaleriAdminController extends Controller
 
         if (Auth::user()->role == 'admin') {
             $validatedData['id_divisi'] = Auth::user()->id_divisi;
+            $validatedData['divisi_uuid'] = Auth::user()->divisi_uuid;
+        } else {
+            $divisi = Divisi::whereIdentifier($validatedData['id_divisi'])->first();
+            if ($divisi) {
+                $validatedData['id_divisi'] = $divisi->id;
+                $validatedData['divisi_uuid'] = $divisi->uuid;
+            }
         }
 
         // SEO Field Processing for Edit
         if ($request->has('slug')) {
             $rawSlug = !empty($validatedData['slug']) ? $validatedData['slug'] : ($galeri->slug ?: $validatedData['judul']);
-            $validatedData['slug'] = $this->generateUniqueSlug($rawSlug, (int) $id);
+            $validatedData['slug'] = $this->generateUniqueSlug($rawSlug, (int) $galeri->id);
         }
 
         if ($request->has('seo_title')) {
@@ -276,9 +319,13 @@ class GaleriAdminController extends Controller
             // 3. Short Database ACID Critical Section with lockForUpdate()
             DB::beginTransaction();
 
-            $lockedGaleri = Konten::where('id', $id)->lockForUpdate()->firstOrFail();
+            $lockedGaleri = Konten::whereIdentifier($id)->lockForUpdate()->firstOrFail();
 
-            if (Auth::user()->role === 'admin' && $lockedGaleri->id_divisi != Auth::user()->id_divisi) {
+            $isMismatch = (!empty($lockedGaleri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
+                ? ($lockedGaleri->divisi_uuid !== Auth::user()->divisi_uuid)
+                : ($lockedGaleri->id_divisi != Auth::user()->id_divisi);
+
+            if (Auth::user()->role === 'admin' && $isMismatch) {
                 abort(403, 'Akses ditolak.');
             }
 
@@ -327,14 +374,18 @@ class GaleriAdminController extends Controller
 
         DB::beginTransaction();
         try {
-            $galeri = Konten::where('id', $id)->lockForUpdate()->first();
+            $galeri = Konten::whereIdentifier($id)->lockForUpdate()->first();
 
             if (!$galeri) {
                 DB::rollBack();
                 return response()->json(['status' => 'error', 'message' => 'Data tidak ditemukan'], 404);
             }
 
-            if (Auth::user()->role === 'admin' && $galeri->id_divisi != Auth::user()->id_divisi) {
+            $isMismatch = (!empty($galeri->divisi_uuid) && !empty(Auth::user()->divisi_uuid))
+                ? ($galeri->divisi_uuid !== Auth::user()->divisi_uuid)
+                : ($galeri->id_divisi != Auth::user()->id_divisi);
+
+            if (Auth::user()->role === 'admin' && $isMismatch) {
                 DB::rollBack();
                 return response()->json(['status' => 'error', 'message' => 'Akses ditolak.'], 403);
             }

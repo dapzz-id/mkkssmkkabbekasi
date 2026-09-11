@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
+use App\Models\Divisi;
 
 class DivisiSeeder extends Seeder
 {
@@ -18,6 +18,11 @@ class DivisiSeeder extends Seeder
             ['nama_divisi' => 'ICT']
         ];
 
-        DB::table('divisi')->insert($divisi);
+        foreach ($divisi as $item) {
+            Divisi::firstOrCreate(
+                ['nama_divisi' => $item['nama_divisi']],
+                $item
+            );
+        }
     }
 } 

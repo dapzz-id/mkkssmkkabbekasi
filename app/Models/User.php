@@ -13,11 +13,16 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements CanResetPasswordContract
 {
-    use HasFactory, HasApiTokens, Notifiable, CanResetPassword;
+    use HasFactory, HasApiTokens, Notifiable, CanResetPassword, \App\Models\Concerns\HasDualIdentifier;
     protected $table = 'user';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'uuid';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
+        'uuid',
         'id_divisi',
+        'divisi_uuid',
         'name',
         'username',
         'password',
@@ -28,11 +33,27 @@ class User extends Authenticatable implements CanResetPasswordContract
     ];
 
     public function divisi() {
-        return $this->belongsTo(Divisi::class, 'id_divisi');
+        return $this->belongsTo(Divisi::class, 'divisi_uuid', 'uuid');
+    }
+
+    public function divisiById() {
+        return $this->belongsTo(Divisi::class, 'id_divisi', 'id');
+    }
+
+    public function divisiByUuid() {
+        return $this->belongsTo(Divisi::class, 'divisi_uuid', 'uuid');
     }
 
     public function konten() {
-        return $this->hasMany(Konten::class, 'id_user');
+        return $this->hasMany(Konten::class, 'user_uuid', 'uuid');
+    }
+
+    public function kontenById() {
+        return $this->hasMany(Konten::class, 'id_user', 'id');
+    }
+
+    public function kontenByUuid() {
+        return $this->hasMany(Konten::class, 'user_uuid', 'uuid');
     }
 
     /**

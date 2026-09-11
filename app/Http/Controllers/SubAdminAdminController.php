@@ -26,12 +26,15 @@ class SubAdminAdminController extends Controller
 
     public function store(Request $request)
     {
+        $isDivisiUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $request->input('divisi'));
+        $divisiRule = $isDivisiUuid ? 'required|exists:divisi,uuid' : 'required|exists:divisi,id';
+
         // Validate form data
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:user',
             'email' => 'required|string|email|max:255|unique:user',
-            'divisi' => 'required|exists:divisi,id',
+            'divisi' => $divisiRule,
             'role' => 'required|string|in:admin,superadmin',
             'password' => 'required|string|min:8',
             'confirm_password' => 'required|string|same:password',
@@ -52,6 +55,9 @@ class SubAdminAdminController extends Controller
             'validation.same' => 'Password tidak sama dengan yang atas',
         ]);
 
+        $divisi = Divisi::whereIdentifier($request->divisi)->first();
+        $idDivisi = $divisi ? $divisi->id : $request->divisi;
+        $divisiUuid = $divisi ? $divisi->uuid : null;
 
         // Create the new Sub Admin
         User::create([
@@ -59,7 +65,8 @@ class SubAdminAdminController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'role' => $request->role,
-            'id_divisi' => $request->divisi,
+            'id_divisi' => $idDivisi,
+            'divisi_uuid' => $divisiUuid,
             'alamat' => $request->alamat,
             'password' => Hash::make($request->password), // Hash password before storing
         ]);
@@ -69,15 +76,12 @@ class SubAdminAdminController extends Controller
     }
 
     public function show($id) {
-        $user = User::with('divisi')->findOrFail($id);
+        $user = User::with('divisi')->whereIdentifier($id)->firstOrFail();
         return view('admin.subadmin.show', compact('user'));
     }
 
     public function edit($id) {
-        $subAdmin = User::findOrFail($id);
-        if(!$subAdmin) {
-            return redirect()->back();
-        }
+        $subAdmin = User::findByIdentifierOrFail($id);
         $divisi = Divisi::all();
 
         return view('admin.subadmin.editsubadmin', [
@@ -88,13 +92,16 @@ class SubAdminAdminController extends Controller
 
     public function update(Request $request, $id) {
         // Validate form data
-        $subAdmin = User::find($id);
+        $subAdmin = User::findByIdentifierOrFail($id);
+
+        $isDivisiUuid = preg_match('/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/', (string) $request->input('divisi'));
+        $divisiRule = $isDivisiUuid ? 'required|exists:divisi,uuid' : 'required|exists:divisi,id';
 
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:user,username,' . $subAdmin->id, // Ignore current username
             'email' => 'required|string|email|max:255|unique:user,email,' . $subAdmin->id, // Ignore current email
-            'divisi' => 'required|exists:divisi,id',
+            'divisi' => $divisiRule,
             'password' => 'nullable|string|min:8',
             'confirm_password' => 'nullable|string|same:password',
             'role' => 'required|string|in:admin,superadmin',
@@ -114,11 +121,14 @@ class SubAdminAdminController extends Controller
             'validation.same' => 'Password tidak sama dengan yang atas'
         ]);
 
+        $divisi = Divisi::whereIdentifier($request->divisi)->first();
+
         // Update Sub Admin details
         $subAdmin->name = $request->name;
         $subAdmin->username = $request->username;
         $subAdmin->email = $request->email;
-        $subAdmin->id_divisi = $request->divisi;
+        $subAdmin->id_divisi = $divisi ? $divisi->id : $request->divisi;
+        $subAdmin->divisi_uuid = $divisi ? $divisi->uuid : null;
         $subAdmin->role = $request->role;
         $subAdmin->alamat = $request->alamat;
 
@@ -134,9 +144,7 @@ class SubAdminAdminController extends Controller
     }
 
     public function destroy($id) {
-        // $user = User::find($id);
-
-        $user = User::where('id', $id)->first();
+        $user = User::whereIdentifier($id)->first();
 
         if($user){
             $user->delete();

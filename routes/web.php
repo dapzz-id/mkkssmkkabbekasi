@@ -202,7 +202,7 @@ Route::get('/gallery/suggestions', function(Request $request) {
             }
         })
         ->limit($remaining)
-        ->get(['id', 'judul', 'deskripsi', 'id_divisi']);
+        ->get(['id', 'uuid', 'judul', 'deskripsi', 'id_divisi', 'divisi_uuid']);
 
         foreach ($items as $item) {
             $divName = $item->divisi ? $item->divisi->nama_divisi : 'Umum';
@@ -288,7 +288,7 @@ Route::get('/manage/user/suggestions', function(Request $request) {
             }
         })
         ->limit(8)
-        ->get(['id', 'name', 'email', 'role', 'id_divisi'])
+        ->get(['id', 'uuid', 'name', 'email', 'role', 'id_divisi', 'divisi_uuid'])
         ->map(function ($item) {
             $divName = $item->divisi ? $item->divisi->nama_divisi : 'Tanpa Divisi';
             return [
@@ -475,6 +475,9 @@ Route::get('/dashboard', function(Request $request) {
     }
 })->name('adm.dashboard');
 
+// Dual identifier pattern matching either numeric INT or canonical UUID v4
+$dualIdPattern = '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+
 // ==========================================
 // 4. MANAGE ACCOUNT (USER / SUBADMIN) ROUTES
 // ==========================================
@@ -483,12 +486,12 @@ Route::get('/subadmin/tambah', [SubAdminAdminController::class, "create"])->name
 Route::get('/manage/user/create', [SubAdminAdminController::class, "create"])->name('user.create');
 Route::post('/subadmin/tambah', [SubAdminAdminController::class, "store"]);
 Route::post('/manage/user', [SubAdminAdminController::class, "store"])->name('user.store');
-Route::get('/subadmin/edit/{id}', [SubAdminAdminController::class, "edit"])->where('id', '[0-9]+');
-Route::get('/manage/user/{id}/edit', [SubAdminAdminController::class, "edit"])->name('user.edit')->where('id', '[0-9]+');
-Route::put('/subadmin/edit/{id}', [SubAdminAdminController::class, "update"])->name('subadmin.update')->where('id', '[0-9]+');
-Route::put('/manage/user/{id}', [SubAdminAdminController::class, "update"])->where('id', '[0-9]+');
+Route::get('/subadmin/edit/{id}', [SubAdminAdminController::class, "edit"])->where('id', $dualIdPattern);
+Route::get('/manage/user/{id}/edit', [SubAdminAdminController::class, "edit"])->name('user.edit')->where('id', $dualIdPattern);
+Route::put('/subadmin/edit/{id}', [SubAdminAdminController::class, "update"])->name('subadmin.update')->where('id', $dualIdPattern);
+Route::put('/manage/user/{id}', [SubAdminAdminController::class, "update"])->where('id', $dualIdPattern);
 Route::delete('/subadmin/{id}', function($id) {
-    $user = User::find($id);
+    $user = User::whereIdentifier($id)->first();
     if ($user) {
         try {
             $user->delete();
@@ -499,9 +502,9 @@ Route::delete('/subadmin/{id}', function($id) {
     } else {
         return response()->json(['status' => 'error', 'message' => 'User not found'], 404);
     }
-})->name('subadmin.delete')->where('id', '[0-9]+');
+})->name('subadmin.delete')->where('id', $dualIdPattern);
 Route::delete('/manage/user/{id}', function($id) {
-    $user = User::find($id);
+    $user = User::whereIdentifier($id)->first();
     if ($user) {
         try {
             $user->delete();
@@ -512,9 +515,9 @@ Route::delete('/manage/user/{id}', function($id) {
     } else {
         return response()->json(['status' => 'error', 'message' => 'User not found'], 404);
     }
-})->where('id', '[0-9]+');
-Route::get('/manage/user/{id}', [SubAdminAdminController::class, 'show'])->name('user.show')->where('id', '[0-9]+');
-Route::get('/subadmin/{id}', [SubAdminAdminController::class, 'show'])->where('id', '[0-9]+');
+})->where('id', $dualIdPattern);
+Route::get('/manage/user/{id}', [SubAdminAdminController::class, 'show'])->name('user.show')->where('id', $dualIdPattern);
+Route::get('/subadmin/{id}', [SubAdminAdminController::class, 'show'])->where('id', $dualIdPattern);
 
 // ==========================================
 // 3. SPONSOR ROUTES
@@ -522,11 +525,11 @@ Route::get('/subadmin/{id}', [SubAdminAdminController::class, 'show'])->where('i
 Route::get('/sponsor/tambah', [SponsorController::class, 'create'])->name('sponsor.create');
 Route::get('/sponsor/create', [SponsorController::class, 'create']);
 Route::post('/sponsor', [SponsorController::class, 'store'])->name('sponsor.store');
-Route::get('/sponsor/edit/{id}', [SponsorController::class, 'edit'])->name('sponsor.edit')->where('id', '[0-9]+');
-Route::get('/sponsor/{id}/edit', [SponsorController::class, 'edit'])->where('id', '[0-9]+');
-Route::put('/sponsor/{id}', [SponsorController::class, 'update'])->name('sponsor.update')->where('id', '[0-9]+');
-Route::delete('/sponsor/{id}', [SponsorController::class, 'destroy'])->name('sponsor.destroy')->where('id', '[0-9]+');
-Route::get('/sponsor/{id}', [SponsorController::class, 'show'])->name('sponsor.show')->where('id', '[0-9]+');
+Route::get('/sponsor/edit/{id}', [SponsorController::class, 'edit'])->name('sponsor.edit')->where('id', $dualIdPattern);
+Route::get('/sponsor/{id}/edit', [SponsorController::class, 'edit'])->where('id', $dualIdPattern);
+Route::put('/sponsor/{id}', [SponsorController::class, 'update'])->name('sponsor.update')->where('id', $dualIdPattern);
+Route::delete('/sponsor/{id}', [SponsorController::class, 'destroy'])->name('sponsor.destroy')->where('id', $dualIdPattern);
+Route::get('/sponsor/{id}', [SponsorController::class, 'show'])->name('sponsor.show')->where('id', $dualIdPattern);
 
 // ==========================================
 // 2. PIMPINAN MKKS ROUTES (Superadmin only)
@@ -535,12 +538,12 @@ Route::get('/pimpinan', [PimpinanAdminController::class, 'index'])->name('pimpin
 Route::get('/pimpinan/tambah', [PimpinanAdminController::class, 'create'])->name('pimpinan.create');
 Route::get('/pimpinan/create', [PimpinanAdminController::class, 'create']);
 Route::post('/pimpinan', [PimpinanAdminController::class, 'store'])->name('pimpinan.store');
-Route::get('/pimpinan/edit/{id}', [PimpinanAdminController::class, 'edit'])->name('pimpinan.edit')->where('id', '[0-9]+');
-Route::get('/pimpinan/{id}/edit', [PimpinanAdminController::class, 'edit'])->where('id', '[0-9]+');
-Route::put('/pimpinan/{id}', [PimpinanAdminController::class, 'update'])->name('pimpinan.update')->where('id', '[0-9]+');
-Route::delete('/pimpinan/{id}', [PimpinanAdminController::class, 'destroy'])->name('pimpinan.destroy')->where('id', '[0-9]+');
-Route::patch('/pimpinan/{id}/toggle-status', [PimpinanAdminController::class, 'toggleStatus'])->name('pimpinan.toggle')->where('id', '[0-9]+');
-Route::get('/pimpinan/{id}', [PimpinanAdminController::class, 'show'])->name('pimpinan.show')->where('id', '[0-9]+');
+Route::get('/pimpinan/edit/{id}', [PimpinanAdminController::class, 'edit'])->name('pimpinan.edit')->where('id', $dualIdPattern);
+Route::get('/pimpinan/{id}/edit', [PimpinanAdminController::class, 'edit'])->where('id', $dualIdPattern);
+Route::put('/pimpinan/{id}', [PimpinanAdminController::class, 'update'])->name('pimpinan.update')->where('id', $dualIdPattern);
+Route::delete('/pimpinan/{id}', [PimpinanAdminController::class, 'destroy'])->name('pimpinan.destroy')->where('id', $dualIdPattern);
+Route::patch('/pimpinan/{id}/toggle-status', [PimpinanAdminController::class, 'toggleStatus'])->name('pimpinan.toggle')->where('id', $dualIdPattern);
+Route::get('/pimpinan/{id}', [PimpinanAdminController::class, 'show'])->name('pimpinan.show')->where('id', $dualIdPattern);
 
 // ==========================================
 // 1. GALLERY ROUTES
@@ -550,12 +553,12 @@ Route::get('/galeri-kelola/tambah', [GaleriAdminController::class, 'create'])->n
 Route::get('/gallery/create', [GaleriAdminController::class, 'create'])->name('gallery.create');
 Route::post('/galeri-kelola', [GaleriAdminController::class, 'store'])->name('galeri.store');
 Route::post('/gallery', [GaleriAdminController::class, 'store'])->name('gallery.store');
-Route::get('/galeri-kelola/edit/{id}', [GaleriAdminController::class, 'edit'])->name('galeri.edit')->where('id', '[0-9]+');
-Route::get('/gallery/{id}/edit', [GaleriAdminController::class, 'edit'])->name('gallery.edit')->where('id', '[0-9]+');
-Route::put('/galeri-kelola/{id}', [GaleriAdminController::class, 'update'])->name('galeri.update')->where('id', '[0-9]+');
-Route::put('/gallery/{id}', [GaleriAdminController::class, 'update'])->where('id', '[0-9]+');
-Route::delete('/galeri-kelola/{id}', [GaleriAdminController::class, 'destroy'])->name('galeri.destroy')->where('id', '[0-9]+');
-Route::delete('/gallery/{id}', [GaleriAdminController::class, 'destroy'])->where('id', '[0-9]+');
+Route::get('/galeri-kelola/edit/{id}', [GaleriAdminController::class, 'edit'])->name('galeri.edit')->where('id', $dualIdPattern);
+Route::get('/gallery/{id}/edit', [GaleriAdminController::class, 'edit'])->name('gallery.edit')->where('id', $dualIdPattern);
+Route::put('/galeri-kelola/{id}', [GaleriAdminController::class, 'update'])->name('galeri.update')->where('id', $dualIdPattern);
+Route::put('/gallery/{id}', [GaleriAdminController::class, 'update'])->where('id', $dualIdPattern);
+Route::delete('/galeri-kelola/{id}', [GaleriAdminController::class, 'destroy'])->name('galeri.destroy')->where('id', $dualIdPattern);
+Route::delete('/gallery/{id}', [GaleriAdminController::class, 'destroy'])->where('id', $dualIdPattern);
 Route::get('/gallery/{slug}', [GaleriAdminController::class, 'show'])->name('gallery.show');
 Route::get('/galeri-kelola/{slug}', [GaleriAdminController::class, 'show']);
 
@@ -610,14 +613,14 @@ Route::post('/manage/event', function(Request $request) {
 
 Route::get('/calendar/edit/{id}', function($id) {
     if (!Auth::check()) return redirect('/login');
-    $calendar = Calendar::findOrFail($id);
+    $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.editcalendar', compact('calendar'));
-})->name('calendar.edit')->where('id', '[0-9]+');
+})->name('calendar.edit')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 Route::get('/manage/event/{id}/edit', function($id) {
     if (!Auth::check()) return redirect('/login');
-    $calendar = Calendar::findOrFail($id);
+    $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.editcalendar', compact('calendar'));
-})->name('event.edit')->where('id', '[0-9]+');
+})->name('event.edit')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 
 Route::put('/calendar/{id}', function(Request $request, $id) {
     if (!Auth::check()) return redirect('/login');
@@ -630,14 +633,14 @@ Route::put('/calendar/{id}', function(Request $request, $id) {
         'date.date' => 'Format tanggal tidak valid',
     ]);
 
-    $calendar = Calendar::findOrFail($id);
+    $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     $calendar->update([
         'event_name' => $request->name,
         'event_date' => $request->date,
     ]);
 
     return redirect('/manage/event')->with('success', 'Data acara berhasil diperbarui.');
-})->name('calendar.update')->where('id', '[0-9]+');
+})->name('calendar.update')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 Route::put('/manage/event/{id}', function(Request $request, $id) {
     if (!Auth::check()) return redirect('/login');
     $request->validate([
@@ -649,18 +652,18 @@ Route::put('/manage/event/{id}', function(Request $request, $id) {
         'date.date' => 'Format tanggal tidak valid',
     ]);
 
-    $calendar = Calendar::findOrFail($id);
+    $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     $calendar->update([
         'event_name' => $request->name,
         'event_date' => $request->date,
     ]);
 
     return redirect('/manage/event')->with('success', 'Data acara berhasil diperbarui.');
-})->where('id', '[0-9]+');
+})->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 
 Route::delete('/calendar/{id}', function($id) {
     if (!Auth::check()) return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
-    $calendar = Calendar::find($id);
+    $calendar = Calendar::whereIdentifier($id)->first();
     if ($calendar) {
         try {
             $calendar->delete();
@@ -671,10 +674,10 @@ Route::delete('/calendar/{id}', function($id) {
     } else {
         return response()->json(['status' => 'error', 'message' => 'Kalender tidak ditemukan!'], 404);
     }
-})->name('calendar.delete')->where('id', '[0-9]+');
+})->name('calendar.delete')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 Route::delete('/manage/event/{id}', function($id) {
     if (!Auth::check()) return response()->json(['status' => 'error', 'message' => 'Unauthorized'], 401);
-    $calendar = Calendar::find($id);
+    $calendar = Calendar::whereIdentifier($id)->first();
     if ($calendar) {
         try {
             $calendar->delete();
@@ -685,16 +688,16 @@ Route::delete('/manage/event/{id}', function($id) {
     } else {
         return response()->json(['status' => 'error', 'message' => 'Kalender tidak ditemukan!'], 404);
     }
-})->where('id', '[0-9]+');
+})->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 
 Route::get('/manage/event/{id}', function($id) {
     if (!Auth::check()) return redirect('/login');
-    $calendar = Calendar::findOrFail($id);
+    $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.show', compact('calendar'));
-})->name('calendar.show')->where('id', '[0-9]+');
+})->name('calendar.show')->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 Route::get('/calendar/{id}', function($id) {
     if (!Auth::check()) return redirect('/login');
-    $calendar = Calendar::findOrFail($id);
+    $calendar = Calendar::whereIdentifier($id)->firstOrFail();
     return view('admin.calender.show', compact('calendar'));
-})->where('id', '[0-9]+');
+})->where('id', '[0-9]+|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}');
 

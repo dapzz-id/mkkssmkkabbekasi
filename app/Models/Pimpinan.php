@@ -4,15 +4,19 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Concerns\HasDualIdentifier;
 
 class Pimpinan extends Model
 {
-    use HasFactory;
+    use HasFactory, HasDualIdentifier;
 
     protected $table = 'pimpinan';
-    protected $primaryKey = 'id';
+    protected $primaryKey = 'uuid';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
     protected $fillable = [
+        'uuid',
         'nama',
         'jabatan',
         'foto',
